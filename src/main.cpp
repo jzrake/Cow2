@@ -3,6 +3,8 @@
 #include "Array.hpp"
 #include "MPI.hpp"
 #include "HDF5.hpp"
+#include "DistributedUniformMesh.hpp"
+
 
 using namespace Cow;
 
@@ -49,10 +51,17 @@ void testHdf5()
 }
 
 
-void testMpi()
+void testDistributedUniformMesh()
 {
-    MpiCommunicator world = MpiCommunicator::world();
-    MpiCartComm cart = world.createCartesian (3);    
+    auto world = MpiCommunicator::world();
+    auto cart = world.createCartesian (1);
+    auto mesh = DistributedUniformMesh ({128}, cart);
+    auto shape = mesh.getLocalArrayShape();
+
+    cart.inSequence ([&] (int rank)
+    {
+        std::cout << "rank: " << rank << " shape = " << shape[0] << std::endl;
+    });
 }
 
 
@@ -63,7 +72,7 @@ int main (int argc, const char* argv[])
     testHeap();
     testArray();
     testHdf5();
-    testMpi();
+    testDistributedUniformMesh();
 
     return 0;
 }

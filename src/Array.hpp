@@ -176,7 +176,11 @@ namespace Cow
         void insert (const Array& A, Range is, Range js, Range ks, Range ms, Range ns);
 
     private:
-        static void copyRange (Array& dst, const Array& src, Range is, Range js, Range ks, Range ms, Range ns, char mode);
+        /** @internal */
+        static void copyRange (Array& dst, const Array& src,
+            Range is, Range js, Range ks, Range ms, Range ns,
+            char mode);
+
         char ordering;
         int n1, n2, n3, n4, n5;
         HeapAllocation memory;
