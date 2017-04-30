@@ -3,14 +3,12 @@
 #include <cassert>
 #include "Array.hpp"
 
-
 #define BOUNDS_CHECK(i, j, k, m, n) assert (true \
 && 0 <= i && i < n1 \
 && 0 <= j && j < n2 \
 && 0 <= k && k < n3 \
 && 0 <= m && m < n4 \
 && 0 <= n && n < n5)
-
 #define INDEXC(i, j, k, m, n) (n5 * (n4 * (n3 * (n2 * i + j) + k) + m) + n)
 #define INDEXF(i, j, k, m, n) (n1 * (n2 * (n3 * (n4 * n + m) + k) + j) + i)
 #define INDEX(i, j, k, m, n) (ordering == 'C' ? INDEXC(i, j, k, m, n) : INDEXF(i, j, k, m, n))
@@ -80,7 +78,7 @@ Range::Range (int lower, int upper) : lower (lower), upper (upper)
 
 }
 
-Range::Range (const char* colon) : lower (0), upper (-1)
+Range::Range (const char* colon) : lower (0), upper (0)
 {
     assert (std::strcmp (colon, ":") == 0);
 }
@@ -92,12 +90,46 @@ int Range::absoluteLower (int size)
 
 int Range::absoluteUpper (int size)
 {
-    return upper < 0 ? upper + size + 1 : upper;
+    return upper <= 0 ? upper + size : upper;
 }
 
 int Range::absoluteLength (int size)
 {
     return absoluteUpper (size) - absoluteLower (size);
+}
+
+
+
+
+// ============================================================================
+Region::Region()
+{
+    for (int n = 0; n < 5; ++n)
+    {
+        lower[n] = 0;
+        upper[n] = 0;
+        stride[n] = 1;
+    }
+}
+
+bool Region::isRelative()
+{
+    for (int n = 0; n < 5; ++n)
+    {
+        if (upper[n] <= 0) return true;
+    }
+    return false;
+}
+
+Region Region::absolute (Shape shape)
+{
+    Region R = *this;
+
+    for (int n = 0; n < 5; ++n)
+    {
+        if (R.upper[n] <= 0) R.upper[n] += shape[n];        
+    }
+    return R;
 }
 
 
@@ -139,7 +171,9 @@ n5 (n5),
 memory (n1 * n2 * n3 * n4 * n5 * sizeof (double))
 {
     for (int i = 0; i < size(); ++i)
+    {
         memory.getElement<double> (i) = 0.0;
+    }
 }
 
 Array::Array (const Array& other)
@@ -376,6 +410,12 @@ void Array::insert (const Array& A, Range is, Range js, Range ks, Range ms, Rang
     copyRange (*this, A, is, js, ks, ms, ns, 'B');
 }
 
+Array::RangeExpression Array::iterate (Region R)
+{
+    Region absRange = R.absolute (shape());
+    return RangeExpression (*this, absRange);
+}
+
 void Array::copyRange (Array& dst, const Array& src, Range is, Range js, Range ks, Range ms, Range ns, char mode)
 {
     const int i0 = is.absoluteLower (src.n1);
@@ -409,4 +449,72 @@ void Array::copyRange (Array& dst, const Array& src, Range is, Range js, Range k
             }
         }
     }
+}
+
+
+
+
+// ============================================================================
+Array::RangeExpression::RangeExpression (Array& A, Region& R) : A (A), R (R)
+{
+    assert (! R.isRelative());
+}
+
+Array::Iterator Array::RangeExpression::begin()
+{
+    return Iterator (A, R);
+}
+
+Array::Iterator Array::RangeExpression::end()
+{
+    return Iterator (A, R, true);
+}
+
+
+
+
+// ============================================================================
+Array::Iterator::Iterator (Array& A, Region& R, bool isEnd) : A (A), R (R)
+{
+    assert (! R.isRelative());
+
+    currentIndex = R.lower;
+    sentinal = isEnd ? A.end() : nullptr;
+}
+
+double* Array::Iterator::operator++ ()
+{
+    Index& I = currentIndex;
+
+    for (int n = 4; n >= 0; --n)
+    {
+        I[n] += R.stride[n];
+
+        if (I[n] < R.upper[n])
+        {
+            return getAddress();
+        }
+        I[n] = R.lower[n];        
+    }
+    return sentinal = A.end();
+}
+
+Array::Iterator::operator double*() const
+{
+    return getAddress();
+}
+
+bool Array::Iterator::operator== (const Iterator& other) const
+{
+    return getAddress() == other.getAddress();
+}
+
+double* Array::Iterator::getAddress() const
+{
+    if (sentinal)
+    {
+        return A.end();
+    }
+    const Index& I = currentIndex;
+    return &A (I[0], I[1], I[2], I[3], I[4]);
 }

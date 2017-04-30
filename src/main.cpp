@@ -64,6 +64,23 @@ void testDistributedUniformMesh()
     });
 }
 
+void testIter()
+{
+    Region region;
+    Array A (2, 2, 2, 2, 2);
+
+    int n = 0;
+
+    for (auto& x : A.iterate (region))
+    {
+        x = n++;
+    }
+
+    for (auto& x : A.iterate (region))
+    {
+        std::cout << x << std::endl;
+    }
+}
 
 int main (int argc, const char* argv[])
 {
@@ -73,6 +90,9 @@ int main (int argc, const char* argv[])
     testArray();
     testHdf5();
     testDistributedUniformMesh();
+    testIter();
+
+
 
     return 0;
 }

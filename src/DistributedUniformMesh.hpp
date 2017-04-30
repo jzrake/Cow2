@@ -20,10 +20,10 @@ namespace Cow
         void synchronize (Array& A) const;
 
         /** Get the shape required for the local data block. */
-        Cow::Shape getLocalArrayShape();
+        Cow::Shape getLocalArrayShape() const;
 
         /** Generate a new array with the shape of the local data block. */
-        Cow::Array createArray();
+        Cow::Array createArray() const;
 
     private:
         /** @internal */

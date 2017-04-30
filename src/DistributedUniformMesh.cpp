@@ -16,7 +16,7 @@ communicator (communicator)
     assert (globalShape.size() <= 5);
 }
 
-Shape DistributedUniformMesh::getLocalArrayShape()
+Shape DistributedUniformMesh::getLocalArrayShape() const
 {
     Shape localArrayShape;
 
@@ -31,10 +31,9 @@ Shape DistributedUniformMesh::getLocalArrayShape()
         }
         else
         {
-            localArrayShape[n] = 1;
+            localArrayShape[n] = globalShape[n];
         }
     }
-
     return localArrayShape;
 }
 
