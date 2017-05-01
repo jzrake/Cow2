@@ -96,15 +96,39 @@ namespace Cow
     class Range
     {
     public:
-        Range (int index);
-        Range (int lower, int upper);
+        /**
+        Construct a relative or absolute range [i0:i1:di]. The default [0:0:1]
+        is a relative range that covers the whole extent.
+        */
+        Range (int lower, int upper, int stride=1);
+
+        /**
+        Construct a relative range from the character ":" as a shortcut for
+        the whole extent.
+        */
         Range (const char*);
-        int absoluteLower (int size);
-        int absoluteUpper (int size);
-        int absoluteLength (int size);
-    private:
+
+        /** Return true if the upper bound is relative to end. */
+        bool isRelative() const;
+
+        /**
+        Get the size of a relative range for the given axis size, after
+        strides are accounted for. The range is assumed to be absolute.
+        */
+        int size () const;
+
+        /**
+        Get the absolute size of a relative range for the given axis size,
+        after strides are accounted for.
+        */
+        int size (int absoluteSize) const;
+
+        /** Return an aboslute version of this range. */
+        Range absolute (int absoluteSize) const;
+
         const int lower;
         const int upper;
+        const int stride;
     };
 
 
@@ -121,8 +145,27 @@ namespace Cow
     {
     public:
         Region();
-        bool isRelative();
-        Region absolute (Shape shape);
+
+        /** Return true if the upper bound is relative to end. */
+        bool isRelative() const;
+
+        /**
+        Return the number of elements along each axis, after strides are
+        accounted for. The region is assumed to be absolute.
+        */
+        Shape shape() const;
+
+        /**
+        Return an absolute version of this region by providing a definite shape.
+        */
+        Region absolute (Shape shape) const;
+
+        /**
+        Return the absolute range of indices (with stride information) covered
+        for the given axis.
+        */
+        Range range (int axis) const;
+
         Index lower;
         Index upper;
         Index stride;
@@ -134,8 +177,13 @@ namespace Cow
     */
     class Array
     {
+    private:
+        class Iterator;
+        class RangeExpression;
+
     public:
         Array();
+        Array (Shape shape);
         Array (int n1);
         Array (int n1, int n2);
         Array (int n1, int n2, int n3);
@@ -189,13 +237,38 @@ namespace Cow
         std::vector<int> getShapeVector() const;
 
         /**
-        Return a new array that is the transpose of this one,
-
-        A.transpose() (i, j, k, m, n) == A (n, m, k, j, i).
-
-        The returned array has same memory layout type as this.
+        Return a new array that is the transpose of this one, A.transpose()
+        (i, j, k, m, n) == A (n, m, k, j, i). The returned array has same
+        memory layout type as this.
         */
         Array transpose() const;
+
+        /**
+        Extract a deep copy of the given relative or absolute region of this
+        array.
+        */
+        Array extract (Region R) const;
+
+        /**
+        Insert all of the given array into the given region of this array.
+        */
+        void insert (const Array& A, Region R);
+
+        /**
+        Return a trivial iterator to the beginning of the array.
+        */
+        double* begin() { return memory.begin<double>(); }
+
+        /**
+        Return a trivial iterator to the end of the array.
+        */
+        double* end() { return memory.end<double>(); }
+
+        /**
+        Return a range expression, with begin() and end() methods,
+        corresponding to the given region of this array.
+        */
+        RangeExpression iterate (Region R);
 
         /** Retrieve a value by linear index */
         double& operator[] (int index);
@@ -215,19 +288,11 @@ namespace Cow
         const double& operator() (int i, int j, int k, int m) const;
         const double& operator() (int i, int j, int k, int m, int n) const;
 
-        Array extract (Range is) const;
-        Array extract (Range is, Range js) const;
-        Array extract (Range is, Range js, Range ks) const;
-        Array extract (Range is, Range js, Range ks, Range ms) const;
-        Array extract (Range is, Range js, Range ks, Range ms, Range ns) const;
+    private:
+        /** @internal */
+        static void copyRegion (Array& dst, const Array& src, Region R, char mode);
 
-        void insert (const Array& A, Range is);
-        void insert (const Array& A, Range is, Range js);
-        void insert (const Array& A, Range is, Range js, Range ks);
-        void insert (const Array& A, Range is, Range js, Range ks, Range ms);
-        void insert (const Array& A, Range is, Range js, Range ks, Range ms, Range ns);
-
-
+        /** @internal */
         class Iterator
         {
         public:
@@ -240,10 +305,11 @@ namespace Cow
             Array& A;
             Region R;
             Index currentIndex;
+            double* currentAddress;
             double* sentinal;
         };
 
-
+        /** @internal */
         class RangeExpression
         {
         public:
@@ -254,17 +320,6 @@ namespace Cow
             Array& A;
             Region R;
         };
-
-        double* begin() { return memory.begin<double>(); }
-        double* end() { return memory.end<double>(); }
-        RangeExpression iterate (Region R);
-
-
-    private:
-        /** @internal */
-        static void copyRange (Array& dst, const Array& src,
-            Range is, Range js, Range ks, Range ms, Range ns,
-            char mode);
 
         char ordering;
         int n1, n2, n3, n4, n5;

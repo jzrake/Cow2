@@ -68,34 +68,37 @@ std::size_t HeapAllocation::size()
 
 
 // ============================================================================
-Range::Range (int index) : Range (index, index + 1)
+Range::Range (int lower, int upper, int stride) : lower (lower), upper (upper), stride (stride)
 {
 
 }
 
-Range::Range (int lower, int upper) : lower (lower), upper (upper)
-{
-
-}
-
-Range::Range (const char* colon) : lower (0), upper (0)
+Range::Range (const char* colon) : lower (0), upper (0), stride (1)
 {
     assert (std::strcmp (colon, ":") == 0);
 }
 
-int Range::absoluteLower (int size)
+bool Range::isRelative() const
 {
-    return lower;
+    return upper <= 0;
 }
 
-int Range::absoluteUpper (int size)
+int Range::size () const
 {
-    return upper <= 0 ? upper + size : upper;
+    assert (! isRelative());
+    return (upper - lower) / stride;    
 }
 
-int Range::absoluteLength (int size)
+int Range::size (int absoluteSize) const
 {
-    return absoluteUpper (size) - absoluteLower (size);
+    return absolute (absoluteSize).size();
+}
+
+Range Range::absolute (int absoluteSize) const
+{
+    const int L = lower;
+    const int U = upper <= 0 ? upper + absoluteSize : upper;
+    return Range (L, U, stride);
 }
 
 
@@ -112,7 +115,7 @@ Region::Region()
     }
 }
 
-bool Region::isRelative()
+bool Region::isRelative() const
 {
     for (int n = 0; n < 5; ++n)
     {
@@ -121,7 +124,12 @@ bool Region::isRelative()
     return false;
 }
 
-Region Region::absolute (Shape shape)
+Shape Region::shape() const
+{
+    return {{ range (0).size(), 0, 0, 0, 0 }};
+}
+
+Region Region::absolute (Shape shape) const
 {
     Region R = *this;
 
@@ -132,11 +140,21 @@ Region Region::absolute (Shape shape)
     return R;
 }
 
+Range Region::range (int axis) const
+{
+    return Range (lower[axis], upper[axis], stride[axis]);
+}
+
 
 
 
 // ============================================================================
 Array::Array() : Array (0, 1, 1, 1, 1)
+{
+
+}
+
+Array::Array (Shape shape) : Array (shape[0], shape[1], shape[2], shape[3], shape[4])
 {
 
 }
@@ -336,78 +354,18 @@ const double& Array::operator() (int i, int j, int k, int m, int n) const
     return memory.getElement<double> (INDEX(i, j, k, m, n));
 }
 
-Array Array::extract (Range is) const
+Array Array::extract (Region R) const
 {
-    Array A (is.absoluteLength (n1));
-    copyRange (A, *this, is, ":", ":", ":", ":", 'A');
+    Region region = R.absolute (shape());
+    Array A (region.shape());
+    copyRegion (A, *this, region, 'A');
     return A;
 }
 
-Array Array::extract (Range is, Range js) const
+void Array::insert (const Array& A, Region R)
 {
-    Array A (
-        is.absoluteLength (n1),
-        js.absoluteLength (n2));
-    copyRange (A, *this, is, js, ":", ":", ":", 'A');
-    return A;
-}
-
-Array Array::extract (Range is, Range js, Range ks) const
-{
-    Array A (
-        is.absoluteLength (n1),
-        js.absoluteLength (n2),
-        ks.absoluteLength (n3));
-    copyRange (A, *this, is, js, ks, ":", ":", 'A');
-    return A;
-}
-
-Array Array::extract (Range is, Range js, Range ks, Range ms) const
-{
-    Array A (
-        is.absoluteLength (n1),
-        js.absoluteLength (n2),
-        ks.absoluteLength (n3),
-        ms.absoluteLength (n4));
-    copyRange (A, *this, is, js, ks, ms, ":", 'A');
-    return A;
-}
-
-Array Array::extract (Range is, Range js, Range ks, Range ms, Range ns) const
-{
-    Array A (
-        is.absoluteLength (n1),
-        js.absoluteLength (n2),
-        ks.absoluteLength (n3),
-        ms.absoluteLength (n4),
-        ns.absoluteLength (n5));
-    copyRange (A, *this, is, js, ks, ms, ns, 'A');
-    return A;
-}
-
-void Array::insert (const Array& A, Range is)
-{
-    copyRange (*this, A, is, ":", ":", ":", ":", 'B');
-}
-
-void Array::insert (const Array& A, Range is, Range js)
-{
-    copyRange (*this, A, is, js, ":", ":", ":", 'B');
-}
-
-void Array::insert (const Array& A, Range is, Range js, Range ks)
-{
-    copyRange (*this, A, is, js, ks, ":", ":", 'B');
-}
-
-void Array::insert (const Array& A, Range is, Range js, Range ks, Range ms)
-{
-    copyRange (*this, A, is, js, ks, ms, ":", 'B');
-}
-
-void Array::insert (const Array& A, Range is, Range js, Range ks, Range ms, Range ns)
-{
-    copyRange (*this, A, is, js, ks, ms, ns, 'B');
+    Region region = R.absolute (shape());
+    copyRegion (*this, A, region, 'B');
 }
 
 Array::RangeExpression Array::iterate (Region R)
@@ -416,33 +374,35 @@ Array::RangeExpression Array::iterate (Region R)
     return RangeExpression (*this, absRange);
 }
 
-void Array::copyRange (Array& dst, const Array& src, Range is, Range js, Range ks, Range ms, Range ns, char mode)
+void Array::copyRegion (Array& dst, const Array& src, Region R, char mode)
 {
-    const int i0 = is.absoluteLower (src.n1);
-    const int j0 = js.absoluteLower (src.n2);
-    const int k0 = ks.absoluteLower (src.n3);
-    const int m0 = ms.absoluteLower (src.n4);
-    const int n0 = ns.absoluteLower (src.n5);
-    const int i1 = is.absoluteUpper (src.n1);
-    const int j1 = js.absoluteUpper (src.n2);
-    const int k1 = ks.absoluteUpper (src.n3);
-    const int m1 = ms.absoluteUpper (src.n4);
-    const int n1 = ns.absoluteUpper (src.n5);
+    assert (! R.isRelative());
 
-    for (int i = i0; i < i1; ++i)
-    for (int j = j0; j < j1; ++j)
-    for (int k = k0; k < k1; ++k)
-    for (int m = m0; m < m1; ++m)
-    for (int n = n0; n < n1; ++n)
+    const Range is = R.range (0);
+    const Range js = R.range (1);
+    const Range ks = R.range (2);
+    const Range ms = R.range (3);
+    const Range ns = R.range (4);
+    const int i0 = is.lower;
+    const int j0 = js.lower;
+    const int k0 = ks.lower;
+    const int m0 = ms.lower;
+    const int n0 = ns.lower;
+
+    for (int i = i0; i < is.upper; i += is.stride)
+    for (int j = j0; j < js.upper; j += js.stride)
+    for (int k = k0; k < ks.upper; k += ks.stride)
+    for (int m = m0; m < ms.upper; m += ms.stride)
+    for (int n = n0; n < ns.upper; n += ns.stride)
     {
         switch (mode)
         {
-            case 'A':
+            case 'A': // The input range refers to the source array.
             {
                 dst (i - i0, j - j0, k - k0, m - m0, n - n0) = src (i, j, k, m, n);
                 break;
             }
-            case 'B':
+            case 'B': // The input range refers to the target array.
             {
                 dst (i, j, k, m, n) = src (i + i0, j + j0, k + k0, m + m0, n + n0);
                 break;                
@@ -450,7 +410,6 @@ void Array::copyRange (Array& dst, const Array& src, Range is, Range js, Range k
         }
     }
 }
-
 
 
 
@@ -479,6 +438,7 @@ Array::Iterator::Iterator (Array& A, Region& R, bool isEnd) : A (A), R (R)
     assert (! R.isRelative());
 
     currentIndex = R.lower;
+    currentAddress = getAddress();
     sentinal = isEnd ? A.end() : nullptr;
 }
 
@@ -492,7 +452,7 @@ double* Array::Iterator::operator++ ()
 
         if (I[n] < R.upper[n])
         {
-            return getAddress();
+            return currentAddress = getAddress();
         }
         I[n] = R.lower[n];        
     }
@@ -501,12 +461,12 @@ double* Array::Iterator::operator++ ()
 
 Array::Iterator::operator double*() const
 {
-    return getAddress();
+    return currentAddress;
 }
 
 bool Array::Iterator::operator== (const Iterator& other) const
 {
-    return getAddress() == other.getAddress();
+    return currentAddress == other.currentAddress;
 }
 
 double* Array::Iterator::getAddress() const
@@ -515,6 +475,16 @@ double* Array::Iterator::getAddress() const
     {
         return A.end();
     }
+
+    // Computing the index directly may be 10-20% faster than calling
+    // Array::operator().
+
     const Index& I = currentIndex;
-    return &A (I[0], I[1], I[2], I[3], I[4]);
+    const char ordering = A.ordering;
+    const int n1 = A.n1;
+    const int n2 = A.n2;
+    const int n3 = A.n3;
+    const int n4 = A.n4;
+    const int n5 = A.n5;
+    return &A.memory.getElement<double> (INDEX(I[0], I[1], I[2], I[3], I[4]));
 }

@@ -67,18 +67,17 @@ void testDistributedUniformMesh()
 void testIter()
 {
     Region region;
-    Array A (2, 2, 2, 2, 2);
+    Array A (16, 16, 16, 16, 16);
+    std::vector<double> B (A.size());
 
     int n = 0;
 
-    for (auto& x : A.iterate (region))
+    for (int i = 0; i < 12; ++i)
     {
-        x = n++;
-    }
-
-    for (auto& x : A.iterate (region))
-    {
-        std::cout << x << std::endl;
+        for (auto& x : A.iterate (region))
+        {
+            x = i * n++;
+        }
     }
 }
 
@@ -86,10 +85,10 @@ int main (int argc, const char* argv[])
 {
     MpiSession mpi;
     
-    testHeap();
-    testArray();
-    testHdf5();
-    testDistributedUniformMesh();
+    // testHeap();
+    // testArray();
+    // testHdf5();
+    // testDistributedUniformMesh();
     testIter();
 
 
