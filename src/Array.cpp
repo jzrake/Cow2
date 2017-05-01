@@ -306,7 +306,7 @@ const double& Array::operator[] (int index) const
 
 Array::Reference Array::operator[] (Region R)
 {
-    return Reference (*this, R);
+    return Reference (*this, R.absolute (shape()));
 }
 
 double& Array::operator() (int i)
@@ -383,12 +383,6 @@ void Array::insert (const Array& A, Region R)
     copyRegion (*this, A, region, 'B');
 }
 
-Array::RangeExpression Array::iterate (Region R)
-{
-    Region absRange = R.absolute (shape());
-    return RangeExpression (*this, absRange);
-}
-
 void Array::copyRegion (Array& dst, const Array& src, Region R, char mode)
 {
     assert (! R.isRelative());
@@ -430,26 +424,17 @@ void Array::copyRegion (Array& dst, const Array& src, Region R, char mode)
 
 
 // ============================================================================
-Array::Reference::Reference (Array& A, Region& R) : A (A), R (R)
-{
-
-}
-
-
-
-
-// ============================================================================
-Array::RangeExpression::RangeExpression (Array& A, Region& R) : A (A), R (R)
+Array::Reference::Reference (Array& A, Region R) : A (A), R (R)
 {
     assert (! R.isRelative());
 }
 
-Array::Iterator Array::RangeExpression::begin()
+Array::Iterator Array::Reference::begin()
 {
     return Iterator (A, R);
 }
 
-Array::Iterator Array::RangeExpression::end()
+Array::Iterator Array::Reference::end()
 {
     return Iterator (A, R, true);
 }
@@ -458,13 +443,12 @@ Array::Iterator Array::RangeExpression::end()
 
 
 // ============================================================================
-Array::Iterator::Iterator (Array& A, Region& R, bool isEnd) : A (A), R (R)
+Array::Iterator::Iterator (Array& A, Region R, bool isEnd) : A (A), R (R)
 {
     assert (! R.isRelative());
 
-    sentinal = isEnd ? A.end() : nullptr;
     currentIndex = R.lower;
-    currentAddress = getAddress();
+    currentAddress = isEnd ? A.end() : getAddress();
 }
 
 double* Array::Iterator::operator++ ()
@@ -481,7 +465,7 @@ double* Array::Iterator::operator++ ()
         }
         I[n] = R.lower[n];        
     }
-    return sentinal = A.end();
+    return currentAddress = A.end();
 }
 
 Array::Iterator::operator double*() const
@@ -494,13 +478,14 @@ bool Array::Iterator::operator== (const Iterator& other) const
     return currentAddress == other.currentAddress;
 }
 
+void Array::Iterator::print (std::ostream& stream) const
+{
+    const Index& I = currentIndex;
+    stream << I[0] << " " << I[1] << " " << I[2] << " " << I[3] << " " << I[4] << std::endl;
+}
+
 double* Array::Iterator::getAddress() const
 {
-    if (sentinal)
-    {
-        return A.end();
-    }
-
     // Computing the index directly may be 10-20% faster than calling
     // Array::operator().
 

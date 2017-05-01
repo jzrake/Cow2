@@ -180,7 +180,6 @@ namespace Cow
     private:
         class Reference;
         class Iterator;
-        class RangeExpression;
 
     public:
         Array();
@@ -266,19 +265,17 @@ namespace Cow
         */
         double* end() { return memory.end<double>(); }
 
-        /**
-        Return a range expression, with begin() and end() methods,
-        corresponding to the given region of this array.
-        */
-        RangeExpression iterate (Region R);
-
         /** Retrieve a value by linear index. */
         double& operator[] (int index);
 
         /** Retrieve a const value by linear index. */
         const double& operator[] (int index) const;
 
-        /** Return a reference to a particular region in this array. */
+        /**
+        Return a reference to a particular region in this array. It is the
+        caller's responsibility to ensure the referenced array remains alive
+        longer than the reference does.
+        */
         Reference operator[] (Region R);
 
         double& operator() (int i);
@@ -300,9 +297,12 @@ namespace Cow
         /** @internal */
         class Reference
         {
-            private:
+        public:
+            Reference (Array& A, Region R);
+            Iterator begin();
+            Iterator end();
+        private:
             friend class Array;
-            Reference (Array& A, Region& R);
             Array& A;
             Region R;
         };
@@ -311,29 +311,17 @@ namespace Cow
         class Iterator
         {
         public:
-            Iterator (Array& A, Region& R, bool isEnd=false);
+            Iterator (Array& A, Region R, bool isEnd=false);
             operator double*() const;
             double* operator++ ();
             bool operator== (const Iterator& other) const;
+            void print (std::ostream& stream) const;
         private:
             double* getAddress() const;
             Array& A;
             Region R;
             Index currentIndex;
             double* currentAddress;
-            double* sentinal;
-        };
-
-        /** @internal */
-        class RangeExpression
-        {
-        public:
-            RangeExpression (Array& A, Region& R);
-            Iterator begin();
-            Iterator end();
-        private:
-            Array& A;
-            Region R;
         };
 
         char ordering;

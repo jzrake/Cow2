@@ -71,25 +71,12 @@ void testIter()
     Array A (2, 2, 2, 2, 2);
     A.extract (region);
 
+
     int n = 0;
-
-    for (auto& x : A.iterate (region))
+    for (auto& x : A [region])
     {
-        x = ++n;
-    }
-
-
-    auto C = Array (A[region]);
-    std::cout << C.size() << std::endl;
-
-    n = 0;
-
-    for (int i = 0; i < 12; ++i)
-    {
-        for (auto& x : A.iterate (region))
-        {
-            x = 0;
-        }
+        std::cout << n << std::endl;
+        x = n++;
     }
 }
 
