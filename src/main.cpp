@@ -64,22 +64,35 @@ void testDistributedUniformMesh()
     });
 }
 
+
 void testIter()
 {
     Region region;
-    Array A (16, 16, 16, 16, 16);
-    std::vector<double> B (A.size());
+    Array A (2, 2, 2, 2, 2);
+    A.extract (region);
 
     int n = 0;
+
+    for (auto& x : A.iterate (region))
+    {
+        x = ++n;
+    }
+
+
+    auto C = Array (A[region]);
+    std::cout << C.size() << std::endl;
+
+    n = 0;
 
     for (int i = 0; i < 12; ++i)
     {
         for (auto& x : A.iterate (region))
         {
-            x = i * n++;
+            x = 0;
         }
     }
 }
+
 
 int main (int argc, const char* argv[])
 {

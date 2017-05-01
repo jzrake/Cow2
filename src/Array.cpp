@@ -126,7 +126,12 @@ bool Region::isRelative() const
 
 Shape Region::shape() const
 {
-    return {{ range (0).size(), 0, 0, 0, 0 }};
+    return {{
+        range (0).size(),
+        range (1).size(),
+        range (2).size(),
+        range (3).size(),
+        range (4).size() }};
 }
 
 Region Region::absolute (Shape shape) const
@@ -157,6 +162,11 @@ Array::Array() : Array (0, 1, 1, 1, 1)
 Array::Array (Shape shape) : Array (shape[0], shape[1], shape[2], shape[3], shape[4])
 {
 
+}
+
+Array::Array (Reference reference)
+{
+    *this = reference.A.extract (reference.R);
 }
 
 Array::Array (int n1) : Array (n1, 1, 1, 1, 1)
@@ -294,6 +304,11 @@ const double& Array::operator[] (int index) const
     return memory.getElement<double> (index);
 }
 
+Array::Reference Array::operator[] (Region R)
+{
+    return Reference (*this, R);
+}
+
 double& Array::operator() (int i)
 {
     BOUNDS_CHECK(i, 0, 0, 0, 0);
@@ -397,12 +412,12 @@ void Array::copyRegion (Array& dst, const Array& src, Region R, char mode)
     {
         switch (mode)
         {
-            case 'A': // The input range refers to the source array.
+            case 'A': // Extract: the region refers to the source array.
             {
                 dst (i - i0, j - j0, k - k0, m - m0, n - n0) = src (i, j, k, m, n);
                 break;
             }
-            case 'B': // The input range refers to the target array.
+            case 'B': // Insert: the region refers to the target array.
             {
                 dst (i, j, k, m, n) = src (i + i0, j + j0, k + k0, m + m0, n + n0);
                 break;                
@@ -410,6 +425,16 @@ void Array::copyRegion (Array& dst, const Array& src, Region R, char mode)
         }
     }
 }
+
+
+
+
+// ============================================================================
+Array::Reference::Reference (Array& A, Region& R) : A (A), R (R)
+{
+
+}
+
 
 
 
@@ -437,9 +462,9 @@ Array::Iterator::Iterator (Array& A, Region& R, bool isEnd) : A (A), R (R)
 {
     assert (! R.isRelative());
 
+    sentinal = isEnd ? A.end() : nullptr;
     currentIndex = R.lower;
     currentAddress = getAddress();
-    sentinal = isEnd ? A.end() : nullptr;
 }
 
 double* Array::Iterator::operator++ ()

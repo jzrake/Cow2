@@ -178,12 +178,14 @@ namespace Cow
     class Array
     {
     private:
+        class Reference;
         class Iterator;
         class RangeExpression;
 
     public:
         Array();
         Array (Shape shape);
+        Array (Reference reference);
         Array (int n1);
         Array (int n1, int n2);
         Array (int n1, int n2, int n3);
@@ -270,11 +272,14 @@ namespace Cow
         */
         RangeExpression iterate (Region R);
 
-        /** Retrieve a value by linear index */
+        /** Retrieve a value by linear index. */
         double& operator[] (int index);
 
-        /** Retrieve a const value by linear index */
+        /** Retrieve a const value by linear index. */
         const double& operator[] (int index) const;
+
+        /** Return a reference to a particular region in this array. */
+        Reference operator[] (Region R);
 
         double& operator() (int i);
         double& operator() (int i, int j);
@@ -291,6 +296,16 @@ namespace Cow
     private:
         /** @internal */
         static void copyRegion (Array& dst, const Array& src, Region R, char mode);
+
+        /** @internal */
+        class Reference
+        {
+            private:
+            friend class Array;
+            Reference (Array& A, Region& R);
+            Array& A;
+            Region R;
+        };
 
         /** @internal */
         class Iterator
