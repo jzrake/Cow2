@@ -40,33 +40,40 @@ void testArray()
 
 void testHdf5()
 {
-    auto testFile = H5::File ("test.h5");
-    auto group1 = testFile.createGroup ("group1");
-    auto group2 = testFile.createGroup ("group2");
-    auto A = Array (2, 2, 1, 2, 1);
-
-    int n = 0;
-
-    for (auto &x : A)
     {
-        x = ++n;
+        auto testFile = H5::File ("test.h5", "w");
+        auto group1 = testFile.createGroup ("group1");
+        auto group2 = testFile.createGroup ("group2");
+        auto A = Array (2, 2, 1, 2, 1);
+
+        int n = 0;
+
+        for (auto &x : A)
+        {
+            x = ++n;
+        }
+
+        group1.write ("nameOfCat", "orange cat");
+        group1.write ("someData", A);
+        group1.write ("doubleParameter", 1.234);
+
+        auto dset1 = testFile.createDataSet ("dset1", A.getShapeVector());
+        auto dset2 = testFile.createDataSet ("dset2", A.getShapeVector());
+
+        Region region1;
+        Region region2;
+
+        dset1[region1] = A[region2];
+        dset2[region1] = A;
+
+        testFile.write ("dset3", A);
+        testFile.write ("dset4", A[region1]);
     }
 
-    group1.write ("nameOfCat", "orange cat");
-    group1.write ("someData", A);
-    group1.write ("doubleParameter", 1.234);
-
-    auto dset1 = testFile.createDataSet ("dset1", A.getShapeVector());
-    auto dset2 = testFile.createDataSet ("dset2", A.getShapeVector());
-
-    Region region1;
-    Region region2;
-
-    dset1[region1] = A[region2];
-    dset2[region1] = A;
-
-    testFile.write ("dset3", A);
-    testFile.write ("dset4", A[region1]);
+    {
+        auto testFile = H5::File ("test.h5", "a");
+        testFile.write ("wrttenAfter", "this data was written in H5F_ACC_RDWR mode");
+    }
 }
 
 
@@ -117,7 +124,7 @@ int main (int argc, const char* argv[])
     testHeap();
     testArray();
     testHdf5();
-    testDistributedUniformMesh();
+    //testDistributedUniformMesh();
     testIter();
 
     return 0;

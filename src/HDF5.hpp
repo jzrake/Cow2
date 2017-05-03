@@ -40,6 +40,14 @@ namespace Cow
         class ObjectProvider
         {
         public:
+            /**
+            This is required because of multiple inheritance.
+            */
+            ObjectProvider& operator= (const ObjectProvider&) = default;
+
+            /**
+            Derived classes must implement this method.
+            */
             virtual Object* getObject() = 0;
         };
 
@@ -248,13 +256,17 @@ namespace Cow
         class File : public GroupCreator, public DataSetCreator
         {
         public:
-            File (std::string name);
+            /**
+            Create or open an HDF5 file. Mode may be "r", "a", or "w"
+            corresponding to read, read/write, and truncate modes.
+            */
+            File (std::string name, const char* mode="r");
 
             /**
             Return the number of HDF5 objects that are open and attached to
             this file.
             */
-            int getObjectCount();
+            int getObjectCount() const;
 
         private:
             Object* getObject() override { return object.get(); }

@@ -305,14 +305,33 @@ H5::DataType::DataType (Object* object) : object (object)
  }
 
 
+
+
 // ============================================================================
-H5::File::File (std::string name)
+H5::File::File (std::string name, const char* mode)
 {
-    hid_t id = H5Fcreate (name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    object.reset (new Object (id, 'F'));
+    if (std::strcmp (mode, "r") == 0)
+    {
+        hid_t id = H5Fopen (name.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+        object.reset (new Object (id, 'F'));
+        return;        
+    }
+    if (std::strcmp (mode, "a") == 0)
+    {
+        hid_t id = H5Fopen (name.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+        object.reset (new Object (id, 'F'));
+        return;        
+    }
+    if (std::strcmp (mode, "w") == 0)
+    {
+        hid_t id = H5Fcreate (name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+        object.reset (new Object (id, 'F'));
+        return;
+    }
+    assert (false);
 };
 
-int H5::File::getObjectCount()
+int H5::File::getObjectCount() const
 {
     return H5Fget_obj_count (object->id, H5F_OBJ_ALL);
 }
