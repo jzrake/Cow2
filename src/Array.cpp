@@ -35,6 +35,12 @@ HeapAllocation::HeapAllocation (const HeapAllocation& other) : numberOfBytes (ot
     std::memcpy (allocation, other.allocation, numberOfBytes);
 }
 
+HeapAllocation::HeapAllocation (std::string content) : numberOfBytes (content.size())
+{
+    allocation = std::malloc (numberOfBytes);
+    std::memcpy (allocation, content.data(), numberOfBytes);
+}
+
 HeapAllocation::HeapAllocation (HeapAllocation&& other)
 {
     allocation = other.allocation;
@@ -134,13 +140,45 @@ Shape Region::shape() const
         range (4).size() }};
 }
 
+std::vector<int> Region::getShapeVector() const
+{
+    // Note: this code is identical to Array::getShapeVector().
+
+    Shape fullShape = shape();
+    int lastNonEmptyAxis = 4;
+
+    while (fullShape[lastNonEmptyAxis] == 1 && lastNonEmptyAxis >= 0)
+    {
+        --lastNonEmptyAxis;
+    }
+    return std::vector<int> (&fullShape[0], &fullShape[lastNonEmptyAxis] + 1);
+}
+
 Region Region::absolute (Shape shape) const
 {
     Region R = *this;
 
     for (int n = 0; n < 5; ++n)
     {
-        if (R.upper[n] <= 0) R.upper[n] += shape[n];        
+        if (R.upper[n] <= 0) R.upper[n] += shape[n];
+    }
+    return R;
+}
+
+Region Region::absolute (std::vector<int> shapeVector) const
+{
+    Region R = *this;
+
+    for (int n = 0; n < 5; ++n)
+    {
+        if (n < shapeVector.size())
+        {
+            if (R.upper[n] <= 0) R.upper[n] += shapeVector[n];
+        }
+        else
+        {
+            R.upper[n] = 1;
+        }
     }
     return R;
 }
@@ -265,15 +303,14 @@ char Array::getOrdering() const
 
 std::vector<int> Array::getShapeVector() const
 {
-    std::vector<int> S;
+    Shape fullShape = shape();
+    int lastNonEmptyAxis = 4;
 
-    if (n1 > 1) S.push_back (n1);
-    if (n2 > 1) S.push_back (n2);
-    if (n3 > 1) S.push_back (n3);
-    if (n4 > 1) S.push_back (n4);
-    if (n5 > 1) S.push_back (n5);
-
-    return S;
+    while (fullShape[lastNonEmptyAxis] == 1 && lastNonEmptyAxis >= 0)
+    {
+        --lastNonEmptyAxis;
+    }
+    return std::vector<int> (&fullShape[0], &fullShape[lastNonEmptyAxis] + 1);
 }
 
 Array Array::transpose() const
@@ -429,6 +466,16 @@ Array::Reference::Reference (Array& A, Region R) : A (A), R (R)
     assert (! R.isRelative());
 }
 
+const Array& Array::Reference::getArray() const
+{
+    return A;
+}
+
+const Region& Array::Reference::getRegion() const
+{
+    return R;
+}
+
 Array::Iterator Array::Reference::begin()
 {
     return Iterator (A, R);
@@ -463,7 +510,7 @@ double* Array::Iterator::operator++ ()
         {
             return currentAddress = getAddress();
         }
-        I[n] = R.lower[n];        
+        I[n] = R.lower[n];
     }
     return currentAddress = A.end();
 }

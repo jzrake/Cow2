@@ -79,6 +79,41 @@ H5::DataSet H5::DataSetCreator::createDataSet (std::string name, std::vector<int
     return H5::DataSet (new Object (datasetId, 'D'));
 }
 
+H5::DataSet H5::DataSetCreator::write (std::string name, std::string value)
+{
+    auto ds = createDataSet (name, H5::DataType::nativeString (value.size()));
+    ds.write (value);
+    return ds;
+}
+
+H5::DataSet H5::DataSetCreator::write (std::string name, double value)
+{
+    auto ds = createDataSet (name, H5::DataType::nativeDouble());
+    ds.write (value);
+    return ds;
+}
+
+H5::DataSet H5::DataSetCreator::write (std::string name, int value)
+{
+    auto ds = createDataSet (name, H5::DataType::nativeInt());
+    ds.write (value);
+    return ds;
+}
+
+H5::DataSet H5::DataSetCreator::write (std::string name, const Array& A)
+{
+    auto ds = createDataSet (name, A.getShapeVector());
+    ds.write (A);
+    return ds;    
+}
+
+H5::DataSet H5::DataSetCreator::write (std::string name, const Array::Reference reference)
+{
+    auto ds = createDataSet (name, reference.getRegion().getShapeVector());
+    ds[Region()] = reference;
+    return ds;
+}
+
 
 
 
@@ -88,60 +123,95 @@ H5::DataSet::DataSet (Object* object) : object (object)
 
 }
 
-void H5::DataSet::write (const Cow::Array& A)
+void H5::DataSet::writeBuffer (DataType dataType,
+    DataSpace memorySpace,
+    DataSpace fileSpace,
+    const HeapAllocation& buffer) const
 {
-    DataSpace space = getSpace();
+    H5Dwrite (
+        object->id,
+        dataType.object->id,
+        memorySpace.object->id,
+        fileSpace.object->id,
+        H5P_DEFAULT,
+        buffer.begin());
+}
+
+void H5::DataSet::write (const Cow::Array& A) const
+{
+    auto space = getSpace();
+    auto type = DataType::nativeDouble();
 
     assert (A.getShapeVector() == space.getShape());
 
-    const void* buffer = &A[0];
-    Array B;
-
     if (A.getOrdering() == 'F')
     {
-        B = A.transpose();
-        buffer = &B[0];
+        auto B = A.transpose();
+        writeBuffer (type, space, space, B.getAllocation());
     }
-
-    H5Dwrite (
-        object->id,
-        H5T_NATIVE_DOUBLE,
-        space.object->id,
-        space.object->id,
-        H5P_DEFAULT,
-        buffer);
+    else
+    {
+        writeBuffer (type, space, space, A.getAllocation());
+    }
 }
 
-void H5::DataSet::write (std::string S)
+void H5::DataSet::write (std::string S) const
 {
     DataType type = getType();
     DataSpace space = getSpace();
+    auto buffer = HeapAllocation (S);
 
     assert (space.getShape().size() == 0);
     assert (H5Tget_class (type.object->id) == H5T_STRING);
     assert (H5Tget_size (type.object->id) == S.size());
 
-    const void* buffer = S.c_str();
-
-    H5Dwrite (
-        object->id,
-        type.object->id,
-        space.object->id,
-        space.object->id,
-        H5P_DEFAULT,
-        buffer);
+    writeBuffer (type, space, space, buffer);
 }
 
-H5::DataSpace H5::DataSet::getSpace()
+H5::DataSpace H5::DataSet::getSpace() const
 {
     hid_t spaceId = H5Dget_space (object->id);
     return new Object (spaceId, 'S');
 }
 
-H5::DataType H5::DataSet::getType()
+H5::DataType H5::DataSet::getType() const
 {
     hid_t typeId = H5Dget_type (object->id);
     return new Object (typeId, 'T');
+}
+
+H5::DataSet::Reference H5::DataSet::operator[] (Region region)
+{
+    return Reference (*this, region.absolute (getSpace().getShape()));
+}
+
+
+
+
+// ============================================================================
+H5::DataSet::Reference::Reference (DataSet& D, Region R) : D(D), R(R)
+{
+    assert (! R.isRelative());
+}
+
+const Array& H5::DataSet::Reference::operator= (Array& A)
+{
+    this->operator= (A[Region()]);
+    return A;
+}
+
+const Array::Reference& H5::DataSet::Reference::operator= (const Array::Reference& ref)
+{
+    auto dataType = DataType::nativeDouble();
+    auto fileSpace = D.getSpace();
+    auto memorySpace = DataSpace::simple (ref.getArray().getShapeVector());
+
+    fileSpace.select (R);
+    memorySpace.select (ref.getRegion());
+
+    D.writeBuffer (dataType, memorySpace, fileSpace, ref.getArray().getAllocation());
+
+    return ref;
 }
 
 
@@ -173,7 +243,7 @@ H5::DataSpace H5::DataSpace::simple (std::vector<int> shape)
     return new Object (id, 'S');
 }
 
-std::vector<int> H5::DataSpace::getShape()
+std::vector<int> H5::DataSpace::getShape() const
 {
     int ndims = H5Sget_simple_extent_ndims (object->id);
     std::vector<hsize_t> hdims (ndims);
@@ -185,6 +255,31 @@ std::vector<int> H5::DataSpace::getShape()
         dims.push_back (n);
     }
     return dims;
+}
+
+void H5::DataSpace::select (Region R)
+{
+    auto region = R.absolute (getShape());
+    auto start = std::vector<hsize_t> (5);
+    auto strde = std::vector<hsize_t> (5);
+    auto count = std::vector<hsize_t> (5);
+    auto block = std::vector<hsize_t> (5);
+
+    for (int n = 0; n < 5; ++n)
+    {
+        start[n] = region.lower[n];
+        strde[n] = region.stride[n];
+        count[n] = region.range (n).size();
+        block[n] = 1;
+    }
+
+    H5Sselect_hyperslab (
+        object->id,
+        H5S_SELECT_SET,
+        &start[0],
+        &strde[0],
+        &count[0],
+        &block[0]);
 }
 
 

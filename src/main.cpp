@@ -4,7 +4,7 @@
 #include "MPI.hpp"
 #include "HDF5.hpp"
 #include "DistributedUniformMesh.hpp"
-
+#include "Timer.hpp"
 
 using namespace Cow;
 
@@ -40,14 +40,32 @@ void testArray()
 
 void testHdf5()
 {
-    H5::File testFile ("test.h5");
-    H5::Group group1 = testFile.createGroup ("group1");
-    H5::DataSet dset1 = group1.createDataSet ("dataset1", {3, 3, 4});
-    H5::DataSet dset2 = group1.createDataSet ("dataset2", {3, 3, 4});
+    auto testFile = H5::File ("test.h5");
+    auto group1 = testFile.createGroup ("group1");
+    auto group2 = testFile.createGroup ("group2");
+    auto A = Array (2, 2, 1, 2, 1);
 
-    std::string value = "value for the property";
-    H5::DataSet stringDataSet = testFile.createDataSet ("property", H5::DataType::nativeString (value.size()));
-    stringDataSet.write (value);
+    int n = 0;
+
+    for (auto &x : A)
+    {
+        x = ++n;
+    }
+
+    group1.write ("nameOfCat", "orange cat");
+    group1.write ("someData", A);
+
+    auto dset1 = testFile.createDataSet ("dset1", A.getShapeVector());
+    auto dset2 = testFile.createDataSet ("dset2", A.getShapeVector());
+
+    Region region1;
+    Region region2;
+
+    dset1[region1] = A[region2];
+    dset2[region1] = A;
+
+    testFile.write ("dset3", A);
+    testFile.write ("dset4", A[region1]);
 }
 
 
@@ -60,24 +78,34 @@ void testDistributedUniformMesh()
 
     cart.inSequence ([&] (int rank)
     {
-        std::cout << "rank: " << rank << " shape = " << shape[0] << std::endl;
+        std::cout << "MPI rank: " << rank << ", proc shape = " << shape[0] << std::endl;
     });
 }
 
 
-void testIter()
+template <class T> void timeLoopEvaluation (T ref, std::string message)
 {
-    Region region;
-    Array A (2, 2, 2, 2, 2);
-    A.extract (region);
-
+    auto timer = Timer();
 
     int n = 0;
-    for (auto& x : A [region])
+    for (auto& x : ref)
     {
-        std::cout << n << std::endl;
         x = n++;
     }
+
+    std::cout << message << ": " << timer.age() << " s" << std::endl;
+};
+
+
+void testIter()
+{
+    auto region = Region();
+    auto A = Array (24, 24, 24, 24, 24);
+    auto B = std::vector<double> (A.size());
+
+    timeLoopEvaluation (A, "Cow::Array -> raw linear iteration");
+    timeLoopEvaluation (A[region], "Cow::Array -> region iteration");
+    timeLoopEvaluation (B, "std::vector -> linear iteration");
 }
 
 
@@ -85,13 +113,11 @@ int main (int argc, const char* argv[])
 {
     MpiSession mpi;
     
-    // testHeap();
-    // testArray();
-    // testHdf5();
-    // testDistributedUniformMesh();
+    testHeap();
+    testArray();
+    testHdf5();
+    testDistributedUniformMesh();
     testIter();
-
-
 
     return 0;
 }

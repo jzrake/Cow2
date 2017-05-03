@@ -33,6 +33,11 @@ namespace Cow
         HeapAllocation (std::size_t numberOfBytes);
 
         /**
+        Create a heap allocation from a std::string.
+        */
+        HeapAllocation (std::string content);
+
+        /**
         Construct this memory block from a deep copy of another one.
         */
         HeapAllocation (const HeapAllocation& other);
@@ -57,6 +62,11 @@ namespace Cow
         */
         std::size_t size();
 
+        const void* begin() const
+        {
+            return allocation;
+        }
+
         template <class T> T& getElement (std::size_t index)
         {
             return static_cast<T*>(allocation)[index];
@@ -67,10 +77,15 @@ namespace Cow
             return static_cast<T*>(allocation)[index];
         }
 
-        template <class T> T* begin() { return static_cast<T*>(allocation); }
-        template <class T> T* end() { return static_cast<T*>(allocation) + numberOfBytes / sizeof(T); }
-        template <class T> const T* begin() const { return static_cast<T*>(allocation); }
-        template <class T> const T* end() const { return static_cast<T*>(allocation) + numberOfBytes / sizeof(T); }
+        template <class T> T* begin()
+        {
+            return static_cast<T*>(allocation);
+        }
+
+        template <class T> T* end()
+        {
+            return static_cast<T*>(allocation) + numberOfBytes / sizeof(T);
+        }
 
     private:
         void* allocation;
@@ -156,9 +171,20 @@ namespace Cow
         Shape shape() const;
 
         /**
+        Return shape(), but with trailing axes of length 1 removed.
+        */
+        std::vector<int> getShapeVector() const;
+
+        /**
         Return an absolute version of this region by providing a definite shape.
         */
         Region absolute (Shape shape) const;
+
+        /**
+        Return an absolute version of this region by providing a shape vector.
+        Trailing axes are assumed to have size equal to 1.
+        */
+        Region absolute (std::vector<int> shapeVector) const;
 
         /**
         Return the absolute range of indices (with stride information) covered
@@ -177,11 +203,10 @@ namespace Cow
     */
     class Array
     {
-    private:
+    public:
         class Reference;
         class Iterator;
 
-    public:
         Array();
         Array (Shape shape);
         Array (Reference reference);
@@ -205,6 +230,9 @@ namespace Cow
         Assignment operator.
         */
         Array& operator= (const Array& other);
+
+        /** Get a reference to the underlying buffer. */
+        const HeapAllocation& getAllocation() const { return memory; }
 
         /**
         Set the memory layout to either 'C' or 'F' (C or Fortran) type
@@ -232,8 +260,8 @@ namespace Cow
         char getOrdering() const;
 
         /**
-        Return the shape of this array as a vector, whose length is the number
-        of axes that have size greater than 1.
+        Return the shape of this array as a vector, with trailing axes that
+        have length 1 removed.
         */
         std::vector<int> getShapeVector() const;
 
@@ -246,7 +274,7 @@ namespace Cow
 
         /**
         Extract a deep copy of the given relative or absolute region of this
-        array.
+        array. This is equivalent to auto B = Array (A[region]);
         */
         Array extract (Region R) const;
 
@@ -274,7 +302,7 @@ namespace Cow
         /**
         Return a reference to a particular region in this array. It is the
         caller's responsibility to ensure the referenced array remains alive
-        longer than the reference does.
+        at least as long as the reference does.
         */
         Reference operator[] (Region R);
 
@@ -290,16 +318,34 @@ namespace Cow
         const double& operator() (int i, int j, int k, int m) const;
         const double& operator() (int i, int j, int k, int m, int n) const;
 
-    private:
-        /** @internal */
-        static void copyRegion (Array& dst, const Array& src, Region R, char mode);
-
-        /** @internal */
         class Reference
         {
         public:
+            /**
+            Constructor. The region is assumed to be absolute.
+            */
             Reference (Array& A, Region R);
+
+            /**
+            Return the referenced array.
+            */
+            const Array& getArray() const;
+
+            /**
+            Return the region of the referenced array.
+            */
+            const Region& getRegion() const;
+
+            /**
+            Return an iterator to the beginning of the array. When
+            incremented, the result is equivalent to a multidimensional loop
+            over the referenced rgion.
+            */
             Iterator begin();
+
+            /**
+            End iterator.
+            */
             Iterator end();
         private:
             friend class Array;
@@ -307,7 +353,6 @@ namespace Cow
             Region R;
         };
 
-        /** @internal */
         class Iterator
         {
         public:
@@ -323,6 +368,10 @@ namespace Cow
             Index currentIndex;
             double* currentAddress;
         };
+
+    private:
+        /** @internal */
+        static void copyRegion (Array& dst, const Array& src, Region R, char mode);
 
         char ordering;
         int n1, n2, n3, n4, n5;

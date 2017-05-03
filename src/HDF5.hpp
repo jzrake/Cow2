@@ -63,15 +63,31 @@ namespace Cow
         class DataSetCreator : public virtual ObjectProvider
         {
         public:
+
             /**
-            Create a scalar data set below this location.
+            Create a scalar data set at this location with the given type.
             */
             DataSet createDataSet (std::string name, const DataType& type);
 
             /**
-            Create a data set below this location with the given name and shape.
+            Create an array at this location with the given shape, and type of double.
             */
             DataSet createDataSet (std::string name, std::vector<int> shape);
+
+            /** Write a string to a new data set. */
+            DataSet write (std::string name, std::string value);
+
+            /** Write a double to a new data set. */
+            DataSet write (std::string name, double value);
+
+            /** Write an integer to a new data set. */
+            DataSet write (std::string name, int value);
+
+            /** Write an array to a new data set. */
+            DataSet write (std::string name, const Array& A);
+
+            /** Write an array to a new data set. */
+            DataSet write (std::string name, const Array::Reference reference);
         };
 
 
@@ -115,28 +131,57 @@ namespace Cow
         public:
 
             /**
+            A class that refers to a selection within a data set.
+            */
+            class Reference
+            {
+            public:
+                /**
+                Create a reference into a subset of this data set. The given
+                region is assumed to be absolute.
+                */
+                Reference (DataSet& D, Region R);
+                const Array& operator= (Array& A);
+                const Array::Reference& operator= (const Array::Reference& ref);
+            private:
+                DataSet& D;
+                Region R;
+            };
+
+            /**
+            General write function.
+            */
+            void writeBuffer (DataType dataType,
+                DataSpace memorySpace,
+                DataSpace fileSpace,
+               const HeapAllocation& buffer) const;
+
+            /**
             Write an array into the data space. The shape of A must match the
             data space dimensions. If A has Fortran-style internal data
             layout, then this function writes from a buffer that is a
             transposed copy of A, becuase HDF5 assumes 'C' style data layout.
             */
-            void write (const Cow::Array& A);
+            void write (const Cow::Array& A) const;
 
             /**
             Write a string. Assumes the space is DataSpace::scalar() and the
             type is DataType::nativeString().
             */
-            void write (std::string S);
+            void write (std::string S) const;
+
+            /** Get a copy of this data set's data space. */
+            DataSpace getSpace() const;
+
+            /** Get a copy of this data set's data type. */
+            DataType getType() const;
 
             /**
-            Get a copy of this data set's data space.
+            Return a reference to a subset of this data set. It is the
+            caller's responsibility to ensure this data set lives at least as
+            long as the reference.
             */
-            DataSpace getSpace();
-
-            /**
-            Get a copy of this data set's data type.
-            */
-            DataType getType();
+            Reference operator[] (Cow::Region region);
 
         private:
             friend class DataSetCreator;
@@ -164,7 +209,15 @@ namespace Cow
             /**
             Get the data space's shape.
             */
-            std::vector<int> getShape();
+            std::vector<int> getShape() const;
+
+            /**
+            Sets the active selection to correspond to the given region, which
+            may be relative or absolute. This utilizes the HDF5 hyperslab
+            functions.
+            */
+            void select (Region R);
+
         private:
             friend class DataSet;
             friend class DataSetCreator;
