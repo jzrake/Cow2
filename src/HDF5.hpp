@@ -59,7 +59,14 @@ namespace Cow
         {
         public:
             /**
-            Create a group below this location with the given name.
+            Get a group below this location with the given name. The group
+            must already exist.
+            */
+            Group getGroup (std::string name);
+
+            /**
+            Create a group below this location with the given name. The group
+            must not already exist.
             */
             Group createGroup (std::string name);
         };
@@ -71,6 +78,33 @@ namespace Cow
         class DataSetCreator : public virtual ObjectProvider
         {
         public:
+            /**
+            Get a data set at this location with the given name. The data set
+            must already exist.
+            */
+            DataSet getDataSet (std::string name);
+
+            /**
+            Read the whole contents of the scalar data set and return it as an
+            integer.
+            */
+            int readInt (std::string name);
+
+            /**
+            Read the whole contents of the scalar data set and return it as a
+            string.
+            */
+            double readDouble (std::string name);
+
+            /**
+            Read the whole contents of the data set and return it as a string.
+            */
+            std::string readString (std::string name);
+
+            /**
+            Read the whole contents of the data set and return it as an array.
+            */
+            Array readArray (std::string name);
 
             /**
             Create a scalar data set at this location with the given type.
@@ -82,14 +116,14 @@ namespace Cow
             */
             DataSet createDataSet (std::string name, std::vector<int> shape);
 
-            /** Write a string to a new data set. */
-            DataSet write (std::string name, std::string value);
+            /** Write an integer to a new data set. */
+            DataSet write (std::string name, int value);
 
             /** Write a double to a new data set. */
             DataSet write (std::string name, double value);
 
-            /** Write an integer to a new data set. */
-            DataSet write (std::string name, int value);
+            /** Write a string to a new data set. */
+            DataSet write (std::string name, std::string value);
 
             /** Write an array to a new data set. */
             DataSet write (std::string name, const Array& A);
@@ -157,6 +191,16 @@ namespace Cow
             };
 
             /**
+            General read function.
+            */
+            void readBuffer (DataSpace memory, DataSpace file, HeapAllocation& buffer) const;
+
+            /**
+            Read all of the data set and return it as a new heap allocation.
+            */
+            HeapAllocation readAll() const;
+
+            /**
             General write function.
             */
             void writeBuffer (DataSpace memory, DataSpace file, const HeapAllocation& buffer) const;
@@ -165,7 +209,7 @@ namespace Cow
             Write a buffer into the whole data space. The buffer size must
             match the size of the data space.
             */
-            void writeBuffer (const HeapAllocation& buffer) const;
+            void writeAll (const HeapAllocation& buffer) const;
 
             /** Get a copy of this data set's data space. */
             DataSpace getSpace() const;

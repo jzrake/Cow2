@@ -62,10 +62,14 @@ namespace Cow
         */
         std::size_t size() const;
 
-        const void* begin() const
-        {
-            return allocation;
-        }
+        /**
+        Return the contents of the buffer as a string.
+        */
+        std::string toString() const;
+
+        void* begin() { return allocation; }
+
+        const void* begin() const { return allocation; }
 
         template <class T> T& getElement (std::size_t index)
         {

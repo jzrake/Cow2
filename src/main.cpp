@@ -72,7 +72,9 @@ void testHdf5()
 
     {
         auto testFile = H5::File ("test.h5", "a");
-        testFile.write ("wrttenAfter", "this data was written in H5F_ACC_RDWR mode");
+        auto message = std::string ("this data was written in H5F_ACC_RDWR mode");
+        testFile.write ("writtenAfter", message);
+        assert (testFile.getDataSet ("writtenAfter").readAll().toString() == message);
     }
 }
 

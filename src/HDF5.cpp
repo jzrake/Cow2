@@ -45,6 +45,13 @@ H5::Group H5::GroupCreator::createGroup (std::string name)
 
 
 // ============================================================================
+H5::DataSet H5::DataSetCreator::getDataSet (std::string name)
+{
+    Object* object = getObject();
+    hid_t datasetId = H5Dopen (object->id, name.c_str(), H5P_DEFAULT);
+    return H5::DataSet (new Object (datasetId, 'D'));
+}
+
 H5::DataSet H5::DataSetCreator::createDataSet (std::string name, const DataType& type)
 {
     auto object = getObject();
@@ -83,7 +90,7 @@ H5::DataSet H5::DataSetCreator::write (std::string name, std::string value)
 {
     auto ds = createDataSet (name, H5::DataType::nativeString (value.size()));
     HeapAllocation buffer (value);
-    ds.writeBuffer (buffer);
+    ds.writeAll (buffer);
     return ds;
 }
 
@@ -92,7 +99,7 @@ H5::DataSet H5::DataSetCreator::write (std::string name, double value)
     auto ds = createDataSet (name, H5::DataType::nativeDouble());
     HeapAllocation buffer (sizeof(double));
     buffer.getElement<double>(0) = value;
-    ds.writeBuffer (buffer);
+    ds.writeAll (buffer);
     return ds;
 }
 
@@ -101,14 +108,14 @@ H5::DataSet H5::DataSetCreator::write (std::string name, int value)
     auto ds = createDataSet (name, H5::DataType::nativeInt());
     HeapAllocation buffer (sizeof(int));
     buffer.getElement<int>(0) = value;
-    ds.writeBuffer (buffer);
+    ds.writeAll (buffer);
     return ds;
 }
 
 H5::DataSet H5::DataSetCreator::write (std::string name, const Array& A)
 {
     auto ds = createDataSet (name, A.getShapeVector());
-    ds.writeBuffer (A.getAllocation());
+    ds.writeAll (A.getAllocation());
     return ds;    
 }
 
@@ -127,6 +134,25 @@ H5::DataSet::DataSet (Object* object) : object (object)
 {
 
 }
+void H5::DataSet::readBuffer (DataSpace memory, DataSpace file, HeapAllocation& buffer) const
+{
+    DataType type = getType();
+    H5Dread (
+        object->id,
+        type.object->id,
+        memory.object->id,
+        file.object->id,
+        H5P_DEFAULT,
+        buffer.begin());   
+}
+
+HeapAllocation H5::DataSet::readAll() const
+{
+    auto space = getSpace();
+    auto buffer = HeapAllocation (space.size() * getType().bytes());
+    readBuffer (space, space, buffer);
+    return buffer;
+}
 
 void H5::DataSet::writeBuffer (DataSpace memory, DataSpace file, const HeapAllocation& buffer) const
 {
@@ -140,7 +166,7 @@ void H5::DataSet::writeBuffer (DataSpace memory, DataSpace file, const HeapAlloc
         buffer.begin());
 }
 
-void H5::DataSet::writeBuffer (const HeapAllocation& buffer) const
+void H5::DataSet::writeAll (const HeapAllocation& buffer) const
 {
     auto space = getSpace();
     assert (buffer.size() == space.size() * getType().bytes());

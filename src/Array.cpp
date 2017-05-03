@@ -70,6 +70,13 @@ std::size_t HeapAllocation::size() const
     return numberOfBytes;
 }
 
+std::string HeapAllocation::toString() const
+{
+    auto message = std::string (numberOfBytes, 0);
+    std::memcpy (&message[0], allocation, numberOfBytes);
+    return message;
+}
+
 
 
 
