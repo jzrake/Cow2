@@ -151,24 +151,13 @@ namespace Cow
             /**
             General write function.
             */
-            void writeBuffer (DataType dataType,
-                DataSpace memorySpace,
-                DataSpace fileSpace,
-               const HeapAllocation& buffer) const;
+            void writeBuffer (DataSpace memory, DataSpace file, const HeapAllocation& buffer) const;
 
             /**
-            Write an array into the data space. The shape of A must match the
-            data space dimensions. If A has Fortran-style internal data
-            layout, then this function writes from a buffer that is a
-            transposed copy of A, becuase HDF5 assumes 'C' style data layout.
+            Write a buffer into the whole data space. The buffer size must
+            match the size of the data space.
             */
-            void write (const Cow::Array& A) const;
-
-            /**
-            Write a string. Assumes the space is DataSpace::scalar() and the
-            type is DataType::nativeString().
-            */
-            void write (std::string S) const;
+            void writeBuffer (const HeapAllocation& buffer) const;
 
             /** Get a copy of this data set's data space. */
             DataSpace getSpace() const;
@@ -179,7 +168,8 @@ namespace Cow
             /**
             Return a reference to a subset of this data set. It is the
             caller's responsibility to ensure this data set lives at least as
-            long as the reference.
+            long as the reference. This function does not make sense for
+            scalar data sets.
             */
             Reference operator[] (Cow::Region region);
 
@@ -199,17 +189,22 @@ namespace Cow
             /**
             Construct a scalar DataSpace.
             */
-            static DataSpace scalar();
+            DataSpace();
 
             /**
             Construct a DataSpace of the given shape, that is not extensible.
             */
-            static DataSpace simple (std::vector<int> shape);
+            DataSpace (std::vector<int> shape);
 
             /**
             Get the data space's shape.
             */
             std::vector<int> getShape() const;
+
+            /**
+            Return the total number of elements in the data space.
+            */
+            int size() const;
 
             /**
             Sets the active selection to correspond to the given region, which
@@ -235,6 +230,10 @@ namespace Cow
             static DataType nativeInt();
             static DataType nativeDouble();
             static DataType nativeString (int length);
+
+            /** Return the size in bytes of this data type. */
+            std::size_t bytes() const;
+
         private:
             friend class DataSet;
             friend class DataSetCreator;

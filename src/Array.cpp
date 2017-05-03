@@ -65,7 +65,7 @@ HeapAllocation& HeapAllocation::operator= (const HeapAllocation& other)
     return *this;
 }
 
-std::size_t HeapAllocation::size()
+std::size_t HeapAllocation::size() const
 {
     return numberOfBytes;
 }

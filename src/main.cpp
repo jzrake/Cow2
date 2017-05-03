@@ -54,6 +54,7 @@ void testHdf5()
 
     group1.write ("nameOfCat", "orange cat");
     group1.write ("someData", A);
+    group1.write ("doubleParameter", 1.234);
 
     auto dset1 = testFile.createDataSet ("dset1", A.getShapeVector());
     auto dset2 = testFile.createDataSet ("dset2", A.getShapeVector());

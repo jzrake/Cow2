@@ -60,7 +60,7 @@ namespace Cow
         /**
         Return the number of bytes in use.
         */
-        std::size_t size();
+        std::size_t size() const;
 
         const void* begin() const
         {
