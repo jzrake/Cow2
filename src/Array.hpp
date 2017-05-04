@@ -283,9 +283,9 @@ namespace Cow
         Array extract (Region R) const;
 
         /**
-        Insert all of the given array into the given region of this array.
+        Insert all of the source array into the given region of this array.
         */
-        void insert (const Array& A, Region R);
+        void insert (const Array& source, Region R);
 
         /**
         Return a trivial iterator to the beginning of the array.
@@ -329,6 +329,12 @@ namespace Cow
             Constructor. The region is assumed to be absolute.
             */
             Reference (Array& A, Region R);
+
+            /**
+            Copy values from a source array to the referenced region of the
+            target array.
+            */
+            const Array& operator= (const Array& source);
 
             /**
             Return the referenced array.

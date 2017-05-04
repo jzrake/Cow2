@@ -4,7 +4,7 @@ OBJ := $(SRC:.cpp=.o)
 H5I := -I$(HOME)/Software/hdf5-1.8.17/include
 H5L := -L$(HOME)/Software/hdf5-1.8.17/lib -lhdf5
 CXX := mpicxx
-CFLAGS := -std=c++11 -Wall -O3
+CFLAGS := -std=c++11 -Wall -O0 -g
 
 default : cow
 

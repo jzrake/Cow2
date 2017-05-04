@@ -421,10 +421,16 @@ Array Array::extract (Region R) const
     return A;
 }
 
-void Array::insert (const Array& A, Region R)
+void Array::insert (const Array& source, Region R)
 {
     Region region = R.absolute (shape());
-    copyRegion (*this, A, region, 'B');
+
+    if (source.shape() != region.shape())
+    {
+        throw std::runtime_error ("source and target regions have different shapes");
+    }
+
+    copyRegion (*this, source, region, 'B');
 }
 
 void Array::copyRegion (Array& dst, const Array& src, Region R, char mode)
@@ -457,7 +463,7 @@ void Array::copyRegion (Array& dst, const Array& src, Region R, char mode)
             }
             case 'B': // Insert: the region refers to the target array.
             {
-                dst (i, j, k, m, n) = src (i + i0, j + j0, k + k0, m + m0, n + n0);
+                dst (i, j, k, m, n) = src (i - i0, j - j0, k - k0, m - m0, n - n0);
                 break;                
             }
         }
@@ -471,6 +477,12 @@ void Array::copyRegion (Array& dst, const Array& src, Region R, char mode)
 Array::Reference::Reference (Array& A, Region R) : A (A), R (R)
 {
     assert (! R.isRelative());
+}
+
+const Array& Array::Reference::operator= (const Array& source)
+{
+    A.insert (source, R);
+    return source;
 }
 
 const Array& Array::Reference::getArray() const

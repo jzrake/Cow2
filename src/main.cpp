@@ -104,7 +104,7 @@ template <class T> void timeLoopEvaluation (T ref, std::string message)
     }
 
     std::cout << message << ": " << timer.age() << " s" << std::endl;
-};
+}
 
 
 void testIter()
@@ -119,15 +119,30 @@ void testIter()
 }
 
 
+void testSlicing()
+{
+    auto source = Array ( 1, 12, 12);
+    auto target = Array (12, 12, 12);
+    auto R = Region();
+
+    R.lower[0] = 6;
+    R.upper[0] = 7;
+
+    target.insert (source, R);
+    target[R] = source;
+}
+
+
 int main (int argc, const char* argv[])
 {
     MpiSession mpi;
-    
-    testHeap();
-    testArray();
-    testHdf5();
-    //testDistributedUniformMesh();
-    testIter();
+
+    // testHeap();
+    // testArray();
+    // testHdf5();
+    // testDistributedUniformMesh();
+    // testIter();
+    testSlicing();
 
     return 0;
 }
