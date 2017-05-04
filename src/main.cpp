@@ -57,6 +57,7 @@ void testHdf5()
         group1.write ("nameOfCat", "orange cat");
         group1.write ("someData", A);
         group1.write ("doubleParameter", 1.234);
+        group1.createGroup ("nestedGroup").write ("property", 12345);
 
         auto dset1 = testFile.createDataSet ("dset1", A.getShapeVector());
         auto dset2 = testFile.createDataSet ("dset2", A.getShapeVector());
@@ -76,6 +77,12 @@ void testHdf5()
         auto message = std::string ("this data was written in H5F_ACC_RDWR mode");
         testFile.write ("writtenAfter", message);
         assert (testFile.getDataSet ("writtenAfter").readAll().toString() == message);
+
+        auto A = testFile.readArray ("dset3");
+        assert (A.size() == 8);
+
+        auto nestedGroup = testFile.getGroup ("group1/nestedGroup");
+        assert (nestedGroup.readInt ("property") == 12345);
     }
 }
 
@@ -97,8 +104,8 @@ void testDistributedUniformMesh()
 template <class T> void timeLoopEvaluation (T ref, std::string message)
 {
     auto timer = Timer();
-
     int n = 0;
+
     for (auto& x : ref)
     {
         x = n++;
@@ -127,7 +134,7 @@ void testSlicing()
     auto R = Region();
 
     R.lower[0] = 6;
-    R.upper[0] = 8;
+    R.upper[0] = 7;
 
     target.insert (source, R);
     target[R] = source;
@@ -142,7 +149,7 @@ int main (int argc, const char* argv[])
 
     // testHeap();
     // testArray();
-    // testHdf5();
+    testHdf5();
     // testDistributedUniformMesh();
     // testIter();
     testSlicing();

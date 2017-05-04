@@ -470,6 +470,22 @@ void Array::copyRegion (Array& dst, const Array& src, Region R, char mode)
     }
 }
 
+Shape Array::shapeFromVector (std::vector<int> shapeVector)
+{
+    if (shapeVector.size() > 5)
+    {
+        throw std::runtime_error ("shape vector must have size <= 5");
+    }
+
+    return {{
+        shapeVector.size() > 0 ? shapeVector[0] : 1,
+        shapeVector.size() > 1 ? shapeVector[1] : 1,
+        shapeVector.size() > 2 ? shapeVector[2] : 1,
+        shapeVector.size() > 3 ? shapeVector[3] : 1,
+        shapeVector.size() > 4 ? shapeVector[4] : 1,
+    }};
+}
+
 
 
 

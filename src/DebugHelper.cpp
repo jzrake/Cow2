@@ -1,14 +1,19 @@
-#include <cstdio>
+#include <iostream>
 #include <cstdlib>
+#include <stdexcept>
 #include <libunwind.h>
 #include <cxxabi.h>
 #include "DebugHelper.hpp"
-
+#define GUARD_STRING std::string (80, '-')
 
 
 
 void Cow::backtrace()
 {
+    std::cout << GUARD_STRING << std::endl;
+    std::cout << "Backtrace:\n";
+    std::cout << GUARD_STRING << std::endl;
+
     unw_cursor_t cursor;
     unw_context_t context;
 
@@ -52,6 +57,19 @@ void Cow::backtrace()
 
 void Cow::terminateWithBacktrace()
 {
+    try
+    {
+        auto e = std::current_exception();
+
+        if (e)
+            std::rethrow_exception (e);
+    }
+    catch (std::exception& e)
+    {
+        std::cout << GUARD_STRING << std::endl;
+        std::cout << "Uncaught exception: "<< e.what() << std::endl;
+    }
+
     Cow::backtrace();
     exit (1);
 }

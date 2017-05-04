@@ -236,6 +236,9 @@ namespace Cow
         Array& operator= (const Array& other);
 
         /** Get a reference to the underlying buffer. */
+        HeapAllocation& getAllocation() { return memory; }
+
+        /** Get a const reference to the underlying buffer. */
         const HeapAllocation& getAllocation() const { return memory; }
 
         /**
@@ -321,6 +324,8 @@ namespace Cow
         const double& operator() (int i, int j, int k) const;
         const double& operator() (int i, int j, int k, int m) const;
         const double& operator() (int i, int j, int k, int m, int n) const;
+
+        static Shape shapeFromVector (std::vector<int> shapeVector);
 
         class Reference
         {

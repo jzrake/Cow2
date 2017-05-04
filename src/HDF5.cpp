@@ -34,10 +34,17 @@ public:
 
 
 // ============================================================================
+H5::Group H5::GroupCreator::getGroup (std::string name)
+{
+    auto object = getObject();
+    auto id = H5Gopen (object->id, name.c_str(), H5P_DEFAULT);
+    return H5::Group (new Object (id, 'G'));    
+}
+
 H5::Group H5::GroupCreator::createGroup (std::string name)
 {
-    Object* object = getObject();
-    hid_t id = H5Gcreate (object->id, name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    auto object = getObject();
+    auto id = H5Gcreate (object->id, name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     return H5::Group (new Object (id, 'G'));
 }
 
@@ -45,10 +52,10 @@ H5::Group H5::GroupCreator::createGroup (std::string name)
 
 
 // ============================================================================
-H5::DataSet H5::DataSetCreator::getDataSet (std::string name)
+H5::DataSet H5::DataSetCreator::getDataSet (std::string name) const
 {
-    Object* object = getObject();
-    hid_t datasetId = H5Dopen (object->id, name.c_str(), H5P_DEFAULT);
+    auto object = getObject();
+    auto datasetId = H5Dopen (object->id, name.c_str(), H5P_DEFAULT);
     return H5::DataSet (new Object (datasetId, 'D'));
 }
 
@@ -86,10 +93,41 @@ H5::DataSet H5::DataSetCreator::createDataSet (std::string name, std::vector<int
     return H5::DataSet (new Object (datasetId, 'D'));
 }
 
+int H5::DataSetCreator::readInt (std::string name) const
+{
+    auto ds = getDataSet (name);
+    auto buffer = ds.readAll();
+    return buffer.getElement<int>(0);
+}
+
+double H5::DataSetCreator::readDouble (std::string name) const
+{
+    auto ds = getDataSet (name);
+    auto buffer = ds.readAll();
+    return buffer.getElement<double>(0);
+}
+
+std::string H5::DataSetCreator::readString (std::string name) const
+{
+    auto ds = getDataSet (name);
+    auto buffer = ds.readAll();
+    return buffer.toString();
+}
+
+Array H5::DataSetCreator::readArray (std::string name) const
+{
+    auto ds = getDataSet (name);
+    auto space = ds.getSpace();
+    auto shape = Array::shapeFromVector (space.getShape());
+    auto array = Array (shape);
+    ds.readBuffer (space, space, array.getAllocation());
+    return array;
+}
+
 H5::DataSet H5::DataSetCreator::write (std::string name, std::string value)
 {
     auto ds = createDataSet (name, H5::DataType::nativeString (value.size()));
-    HeapAllocation buffer (value);
+    auto buffer = HeapAllocation (value);
     ds.writeAll (buffer);
     return ds;
 }
@@ -97,7 +135,7 @@ H5::DataSet H5::DataSetCreator::write (std::string name, std::string value)
 H5::DataSet H5::DataSetCreator::write (std::string name, double value)
 {
     auto ds = createDataSet (name, H5::DataType::nativeDouble());
-    HeapAllocation buffer (sizeof(double));
+    auto buffer = HeapAllocation (sizeof (double));
     buffer.getElement<double>(0) = value;
     ds.writeAll (buffer);
     return ds;
@@ -106,7 +144,7 @@ H5::DataSet H5::DataSetCreator::write (std::string name, double value)
 H5::DataSet H5::DataSetCreator::write (std::string name, int value)
 {
     auto ds = createDataSet (name, H5::DataType::nativeInt());
-    HeapAllocation buffer (sizeof(int));
+    auto buffer = HeapAllocation (sizeof (int));
     buffer.getElement<int>(0) = value;
     ds.writeAll (buffer);
     return ds;
@@ -250,6 +288,12 @@ H5::DataSpace::DataSpace (Object* object) : object (object)
 std::vector<int> H5::DataSpace::getShape() const
 {
     int ndims = H5Sget_simple_extent_ndims (object->id);
+
+    if (ndims == -1) // An HDF5 error occured. Don't pollute the error stack.
+    {
+        return std::vector<int>();
+    }
+
     std::vector<hsize_t> hdims (ndims);
     H5Sget_simple_extent_dims (object->id, &hdims[0], nullptr);
     std::vector<int> dims;

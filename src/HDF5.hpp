@@ -48,7 +48,7 @@ namespace Cow
             /**
             Derived classes must implement this method.
             */
-            virtual Object* getObject() = 0;
+            virtual const Object* getObject() const = 0;
         };
 
 
@@ -82,29 +82,7 @@ namespace Cow
             Get a data set at this location with the given name. The data set
             must already exist.
             */
-            DataSet getDataSet (std::string name);
-
-            /**
-            Read the whole contents of the scalar data set and return it as an
-            integer.
-            */
-            int readInt (std::string name);
-
-            /**
-            Read the whole contents of the scalar data set and return it as a
-            string.
-            */
-            double readDouble (std::string name);
-
-            /**
-            Read the whole contents of the data set and return it as a string.
-            */
-            std::string readString (std::string name);
-
-            /**
-            Read the whole contents of the data set and return it as an array.
-            */
-            Array readArray (std::string name);
+            DataSet getDataSet (std::string name) const;
 
             /**
             Create a scalar data set at this location with the given type.
@@ -115,6 +93,28 @@ namespace Cow
             Create an array at this location with the given shape, and type of double.
             */
             DataSet createDataSet (std::string name, std::vector<int> shape);
+
+            /**
+            Read the whole contents of the scalar data set and return it as an
+            integer.
+            */
+            int readInt (std::string name) const;
+
+            /**
+            Read the whole contents of the scalar data set and return it as a
+            string.
+            */
+            double readDouble (std::string name) const;
+
+            /**
+            Read the whole contents of the data set and return it as a string.
+            */
+            std::string readString (std::string name) const;
+
+            /**
+            Read the whole contents of the data set and return it as an array.
+            */
+            Array readArray (std::string name) const;
 
             /** Write an integer to a new data set. */
             DataSet write (std::string name, int value);
@@ -313,7 +313,7 @@ namespace Cow
             int getObjectCount() const;
 
         private:
-            Object* getObject() override { return object.get(); }
+            const Object* getObject() const override { return object.get(); }
             std::shared_ptr<Object> object;
         };
 
@@ -332,7 +332,7 @@ namespace Cow
         private:
             friend class GroupCreator;
             Group (Object* object);
-            Object* getObject() override { return object.get(); }
+            const Object* getObject() const override { return object.get(); }
             std::shared_ptr<Object> object;
         };
     }
