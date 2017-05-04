@@ -5,6 +5,7 @@
 #include "HDF5.hpp"
 #include "DistributedUniformMesh.hpp"
 #include "Timer.hpp"
+#include "DebugHelper.hpp"
 
 using namespace Cow;
 
@@ -126,7 +127,7 @@ void testSlicing()
     auto R = Region();
 
     R.lower[0] = 6;
-    R.upper[0] = 7;
+    R.upper[0] = 8;
 
     target.insert (source, R);
     target[R] = source;
@@ -136,6 +137,8 @@ void testSlicing()
 int main (int argc, const char* argv[])
 {
     MpiSession mpi;
+
+    std::set_terminate (Cow::terminateWithBacktrace);
 
     // testHeap();
     // testArray();
