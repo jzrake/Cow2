@@ -1,3 +1,4 @@
+#include <iostream> // DEBUG
 #include <cassert>
 #include <mpi.h>
 #include "MPI.hpp"
@@ -29,6 +30,33 @@ public:
     }
 
     MPI_Comm comm;
+};
+
+
+
+
+// ============================================================================
+struct MpiDataType::Internals
+{
+public:
+    Internals (MPI_Datatype typeToUse, bool stealOwnership=false)
+    {
+        if (stealOwnership)
+        {
+            type = typeToUse;
+        }
+        else
+        {
+            MPI_Type_dup (typeToUse, &type);
+        }
+    }
+
+    ~Internals()
+    {
+        MPI_Type_free (&type);
+    }
+
+    MPI_Datatype type;
 };
 
 
@@ -81,6 +109,19 @@ MpiCartComm MpiCommunicator::createCartesian (int ndims, std::vector<bool> axisI
     std::vector<int> dims (ndims, 0);
     std::vector<int> periods (ndims, 1);
     int reorder = 1;
+    int axisCounter = 0;
+
+    // Set the dims array to have size 1 where axisIsDistributed is false. An
+    // entry of 0 in dims causes MPI_Dims_create to decompose that axis.
+    for (auto isDistributed : axisIsDistributed)
+    {
+        if (! isDistributed)
+        {
+            dims[axisCounter] = 1;
+        }
+        ++axisCounter;
+    }
+
     MPI_Comm cart;
     MPI_Dims_create (size(), ndims, &dims[0]);
     MPI_Cart_create (internals->comm, ndims, &dims[0], &periods[0], reorder, &cart);
@@ -110,7 +151,10 @@ int MpiCartComm::getCartRank (std::vector<int> coords) const
 
 int MpiCartComm::shift (int axis, int offset) const
 {
-    assert (false);
+    int source = rank();
+    int dest;
+    MPI_Cart_shift (internals->comm, axis, offset, &source, &dest);
+    return dest;
 }
 
 int MpiCartComm::getNumberOfDimensions() const
@@ -139,7 +183,84 @@ std::vector<int> MpiCartComm::getCoordinates (int processRank) const
     return coords;
 }
 
+void MpiCartComm::shiftExchange (Array& A, int axis, char sendDirection, Region send, Region recv) const
+{
+    assert (sendDirection == 'L' || sendDirection == 'R');
 
+    auto sendType = MpiDataType::subarray (A.shape(), send);
+    auto recvType = MpiDataType::subarray (A.shape(), recv);
+
+    int sendRank = shift (axis, sendDirection == 'L' ? -1 : +1);
+    int recvRank = shift (axis, sendDirection == 'L' ? +1 : -1);
+
+    MPI_Status status;
+
+    MPI_Sendrecv (
+        A.begin(), 1, sendType.internals->type, sendRank, 12345,
+        A.begin(), 1, recvType.internals->type, recvRank, 12345,
+        internals->comm, &status);
+}
+
+
+
+
+// ============================================================================
+MpiDataType MpiDataType::nativeInt()
+{
+    return new Internals (MPI_INT);
+}
+
+MpiDataType MpiDataType::nativeDouble()
+{
+    return new Internals (MPI_DOUBLE);
+}
+
+MpiDataType MpiDataType::subarray (Shape S, Region R)
+{
+    R = R.absolute (S);
+    int ndims = R.getShapeVector().size();
+    auto sizes = std::vector<int>();
+    auto subsizes = std::vector<int>();
+    auto starts = std::vector<int>();
+
+    for (int n = 0; n < ndims; ++n)
+    {
+        auto range = R.range(n);
+        sizes.push_back (S[n]);
+        subsizes.push_back (range.size());
+        starts.push_back (range.lower);
+        assert (range.stride == 1);
+    }
+
+    MPI_Datatype type;
+    MPI_Type_create_subarray (ndims,
+        &sizes[0],
+        &subsizes[0],
+        &starts[0],
+        MPI_ORDER_C,
+        MPI_DOUBLE,
+        &type);
+    MPI_Type_commit (&type);
+
+    return new Internals (type, true);
+}
+
+MpiDataType::MpiDataType()
+{
+
+}
+
+MpiDataType::MpiDataType (Internals* internals) : internals (internals)
+{
+
+}
+
+std::size_t MpiDataType::size() const
+{
+    int S;
+    MPI_Type_size (internals->type, &S);
+    return S;    
+}
 
 
 // ============================================================================

@@ -4,6 +4,8 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include "Array.hpp"
+
 
 
 
@@ -11,8 +13,12 @@ namespace Cow
 {
     class MpiCommunicator;
     class MpiCartComm;
+    class MpiDataType;
     class MpiSession;
 
+    /**
+    Class to encapulate certain responsibilities of an MPI communicator.
+    */
     class MpiCommunicator
     {
     public:
@@ -24,7 +30,6 @@ namespace Cow
         resources.
         */
         MpiCommunicator();
-        MpiCommunicator (Internals*);
 
         /** Return the rank of this communicator. */
         int rank() const;
@@ -51,14 +56,22 @@ namespace Cow
 
         /**
         Create a cartesian topology, with the given number of dimensions,
-        consisting of the processes in this communicator.
+        consisting of the processes in this communicator. If axisIsDistributed
+        is empty, then the topology will be distributed on all ndims axes.
+        Otherwise, the axes n for which (axisIsDistributed[n] == false) will
+        have size 1 in the communicator.
         */
         MpiCartComm createCartesian (int ndims, std::vector<bool> axisIsDistributed={});
 
     protected:
+        MpiCommunicator (Internals*);
         std::shared_ptr<Internals> internals;
     };
 
+
+    /**
+    Class to encapulate certain responsibilities of an MPI cartesian topology.
+    */
     class MpiCartComm : public MpiCommunicator
     {
     public:
@@ -93,11 +106,65 @@ namespace Cow
         process.
         */
         std::vector<int> getCoordinates (int processRank=-1) const;
+
+        /**
+        Excute an MPI send-recv operation by shifting the cartesian topology
+        along the given axis. Data will be sent in the direction specified, by
+        either 'L' or 'R'. For example, if sendDirection is 'R' then the
+        region of A covered by 'send' is sent to the process on the right,
+        while data in the 'recv' region of A is over-written with data
+        received from the process to the left. The send and receive regions
+        may be relative or absolute, but must not overlap.
+        */
+        void shiftExchange (Array& A, int axis, char sendDirection, Region send, Region recv) const;
+
     private:
         MpiCartComm (Internals*);
         friend class MpiCommunicator;
     };
 
+
+
+    class MpiDataType
+    {
+    public:
+        struct Internals;
+
+        static MpiDataType nativeInt();
+        static MpiDataType nativeDouble();
+
+        /**
+        Create a new MPI array data type, of doubles, which corresponds to the
+        given absolute region. The returned array data type has C ordering.
+        The region must have stride length equal to 1 on each axis.
+        */
+        static MpiDataType subarray (Cow::Shape S, Cow::Region R);
+
+        /**
+        Default constructor, creates an unusable data type.
+        */
+        MpiDataType();
+
+        /**
+        Return the size, in bytes, of the data type.
+        */
+        std::size_t size() const;
+
+    protected:
+        friend class MpiCartComm;
+        MpiDataType (Internals*);
+        std::shared_ptr<Internals> internals;
+    };
+
+
+
+    /**
+    Class to initialize and finalize an MPI session using RAII. Just place one
+    of these in the main() function, and MPI will be initialized. It is
+    finalized when this object goes out of scope. Be sure to only create one
+    of these in your application. Most MPI implementations do not allow
+    MPI_Init to be called again after MPI_Finalize.
+    */
     class MpiSession
     {
     public:

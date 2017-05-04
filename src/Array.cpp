@@ -93,7 +93,7 @@ Range::Range (const char* colon) : lower (0), upper (0), stride (1)
 
 bool Range::isRelative() const
 {
-    return upper <= 0;
+    return upper <= 0 || lower < 0;
 }
 
 int Range::size () const
@@ -109,7 +109,7 @@ int Range::size (int absoluteSize) const
 
 Range Range::absolute (int absoluteSize) const
 {
-    const int L = lower;
+    const int L = lower <  0 ? lower + absoluteSize : lower;
     const int U = upper <= 0 ? upper + absoluteSize : upper;
     return Range (L, U, stride);
 }
@@ -118,6 +118,19 @@ Range Range::absolute (int absoluteSize) const
 
 
 // ============================================================================
+Region Region::empty()
+{
+    Region R;
+
+    for (int n = 0; n < 5; ++n)
+    {
+        R.lower[n] = 0;
+        R.upper[n] = 0;
+        R.stride[n] = 0;
+    }
+    return R;
+}
+
 Region::Region()
 {
     for (int n = 0; n < 5; ++n)
@@ -137,6 +150,15 @@ bool Region::isRelative() const
     return false;
 }
 
+bool Region::isEmpty() const
+{
+    for (int n = 0; n < 5; ++n)
+    {
+        if (upper[n] != 0 || lower[n] != 0 || stride[n] != 0) return false;
+    }
+    return true;
+}
+
 Shape Region::shape() const
 {
     return {{
@@ -154,7 +176,7 @@ std::vector<int> Region::getShapeVector() const
     Shape fullShape = shape();
     int lastNonEmptyAxis = 4;
 
-    while (fullShape[lastNonEmptyAxis] == 1 && lastNonEmptyAxis >= 0)
+    while (fullShape[lastNonEmptyAxis] == 1 && lastNonEmptyAxis >= 1)
     {
         --lastNonEmptyAxis;
     }
@@ -167,6 +189,7 @@ Region Region::absolute (Shape shape) const
 
     for (int n = 0; n < 5; ++n)
     {
+        if (R.lower[n] <  0) R.lower[n] += shape[n];
         if (R.upper[n] <= 0) R.upper[n] += shape[n];
     }
     return R;
@@ -180,10 +203,12 @@ Region Region::absolute (std::vector<int> shapeVector) const
     {
         if (n < shapeVector.size())
         {
+            if (R.lower[n] <  0) R.lower[n] += shapeVector[n];
             if (R.upper[n] <= 0) R.upper[n] += shapeVector[n];
         }
         else
         {
+            R.lower[n] = 0;
             R.upper[n] = 1;
         }
     }
@@ -313,7 +338,7 @@ std::vector<int> Array::getShapeVector() const
     Shape fullShape = shape();
     int lastNonEmptyAxis = 4;
 
-    while (fullShape[lastNonEmptyAxis] == 1 && lastNonEmptyAxis >= 0)
+    while (fullShape[lastNonEmptyAxis] == 1 && lastNonEmptyAxis >= 1)
     {
         --lastNonEmptyAxis;
     }
