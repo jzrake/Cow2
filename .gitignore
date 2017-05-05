@@ -5,3 +5,4 @@ cow
 html
 .DS_Store
 Cow++.sublime-workspace
+libcow.a

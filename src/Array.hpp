@@ -28,7 +28,8 @@ namespace Cow
         HeapAllocation();
 
         /**
-        Allocate a heap block of the given size. Bytes are not zero-initialized.
+        Allocate a heap block of the given size. Bytes are *not* zero-
+        initialized.
         */
         HeapAllocation (std::size_t numberOfBytes);
 
@@ -228,6 +229,9 @@ namespace Cow
         class Reference;
         class Iterator;
 
+        /**
+        Various array constructors. Arrays are zero-initialized on construciton.
+        */
         Array();
         Array (Shape shape);
         Array (Reference reference);
@@ -343,6 +347,7 @@ namespace Cow
         const double& operator() (int i, int j, int k, int m, int n) const;
 
         static Shape shapeFromVector (std::vector<int> shapeVector);
+        static std::vector<int> vectorFromShape (Shape shape);
 
         class Reference
         {
@@ -389,10 +394,39 @@ namespace Cow
         {
         public:
             Iterator (Array& A, Region R, bool isEnd=false);
+
+            /**
+            Treat the iterator as a double pointer to the value at the current index.
+            */
             operator double*() const;
+
+            /** Increment operator. */
             double* operator++ ();
+
+            /**
+            Return the value at some distance in memory away form the current
+            location.
+            */
+            double& operator[] (int offset);
+
+            /** Comparison operator. */
             bool operator== (const Iterator& other) const;
+
+            /** Print the current index of the iterator. */
             void print (std::ostream& stream) const;
+
+            /**
+            Get the current index, relative to the beginnning of the
+            referenced array.
+            */
+            Index index() const;
+
+            /**
+            Return the current index of the iterator relative to the start of
+            the referenced region, rather than the underlying array.
+            */
+            Index relativeIndex() const;
+
         private:
             double* getAddress() const;
             Array& A;

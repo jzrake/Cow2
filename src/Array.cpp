@@ -171,16 +171,7 @@ Shape Region::shape() const
 
 std::vector<int> Region::getShapeVector() const
 {
-    // Note: this code is identical to Array::getShapeVector().
-
-    Shape fullShape = shape();
-    int lastNonEmptyAxis = 4;
-
-    while (fullShape[lastNonEmptyAxis] == 1 && lastNonEmptyAxis >= 1)
-    {
-        --lastNonEmptyAxis;
-    }
-    return std::vector<int> (&fullShape[0], &fullShape[lastNonEmptyAxis] + 1);
+    return Array::vectorFromShape (shape());
 }
 
 Region Region::absolute (Shape shape) const
@@ -335,14 +326,7 @@ char Array::getOrdering() const
 
 std::vector<int> Array::getShapeVector() const
 {
-    Shape fullShape = shape();
-    int lastNonEmptyAxis = 4;
-
-    while (fullShape[lastNonEmptyAxis] == 1 && lastNonEmptyAxis >= 1)
-    {
-        --lastNonEmptyAxis;
-    }
-    return std::vector<int> (&fullShape[0], &fullShape[lastNonEmptyAxis] + 1);
+    return vectorFromShape (shape());
 }
 
 Array Array::transpose() const
@@ -511,6 +495,18 @@ Shape Array::shapeFromVector (std::vector<int> shapeVector)
     }};
 }
 
+std::vector<int> Array::vectorFromShape (Shape shape)
+{
+    int lastNonEmptyAxis = 4;
+
+    while (shape[lastNonEmptyAxis] == 1 && lastNonEmptyAxis >= 1)
+    {
+        --lastNonEmptyAxis;
+    }
+    return std::vector<int> (&shape[0], &shape[lastNonEmptyAxis] + 1);
+}
+
+
 
 
 
@@ -575,6 +571,11 @@ double* Array::Iterator::operator++ ()
     return currentAddress = A.end();
 }
 
+double& Array::Iterator::operator[] (int offset)
+{
+    return A[currentAddress - A.begin() + offset];
+}
+
 Array::Iterator::operator double*() const
 {
     return currentAddress;
@@ -589,6 +590,21 @@ void Array::Iterator::print (std::ostream& stream) const
 {
     const Index& I = currentIndex;
     stream << I[0] << " " << I[1] << " " << I[2] << " " << I[3] << " " << I[4] << std::endl;
+}
+
+Index Array::Iterator::index() const
+{
+    return currentIndex;
+}
+
+Index Array::Iterator::relativeIndex() const
+{
+    Index I = currentIndex;
+    for (int n = 0; n < 5; ++n)
+    {
+        I[n] -= R.lower[n];
+    }
+    return I;
 }
 
 double* Array::Iterator::getAddress() const

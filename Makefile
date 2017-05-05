@@ -1,3 +1,5 @@
+AR := ar rcu
+RANLIB := ranlib
 SRC := $(filter-out src/main.cpp, $(wildcard src/*.cpp))
 HDR := $(wildcard src/*.hpp)
 OBJ := $(SRC:.cpp=.o)
@@ -6,7 +8,7 @@ H5L := -L$(HOME)/Software/hdf5-1.8.17/lib -lhdf5
 CXX := mpicxx
 CFLAGS := -std=c++11 -Wall -O0 -g
 
-default : cow
+default : libcow.a
 
 src/HDF5.o : src/HDF5.cpp $(HDR)
 	$(CXX) $(CFLAGS) -o $@ -c $< $(H5I)
@@ -16,6 +18,10 @@ src/HDF5.o : src/HDF5.cpp $(HDR)
 
 cow : src/main.o $(OBJ)
 	$(CXX) $(CFLAGS) -o $@ $^ $(H5L)
+
+libcow.a : $(OBJ)
+	$(AR) $@ $?
+	$(RANLIB) $@
 
 show :
 	@echo $(SRC)
