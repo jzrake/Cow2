@@ -4,6 +4,11 @@
 #include <cstdlib>
 #include <array>
 #include <vector>
+#include "DebugHelper.hpp"
+
+
+#undef assert
+#define assert(predicate) if (! (predicate)) Cow::terminateWithBacktrace()
 
 
 

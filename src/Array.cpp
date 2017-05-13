@@ -1,7 +1,8 @@
 #include <iostream> // DEBUG
 #include <memory>
-#include <cassert>
+//#include <cassert>
 #include "Array.hpp"
+#include "DebugHelper.hpp"
 
 #define BOUNDS_CHECK(i, j, k, m, n) assert (true \
 && 0 <= i && i < n1 \
@@ -365,7 +366,7 @@ Array::Reference Array::operator[] (Region R)
 double& Array::operator() (int i)
 {
     BOUNDS_CHECK(i, 0, 0, 0, 0);
-    return memory.getElement<double> (i);
+    return memory.getElement<double> (INDEX(i, 0, 0, 0, 0));
 }
 
 double& Array::operator() (int i, int j)
@@ -395,7 +396,7 @@ double& Array::operator() (int i, int j, int k, int m, int n)
 const double& Array::operator() (int i) const
 {
     BOUNDS_CHECK(i, 0, 0, 0, 0);
-    return memory.getElement<double> (i);
+    return memory.getElement<double> (INDEX(i, 0, 0, 0, 0));
 }
 
 const double& Array::operator() (int i, int j) const

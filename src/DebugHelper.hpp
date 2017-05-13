@@ -7,4 +7,9 @@ namespace Cow
     void terminateWithBacktrace();
 }
 
+#ifndef COW_DEBUG_USE_CASSERT
+#undef assert
+#define assert(predicate) if (! (predicate)) Cow::terminateWithBacktrace()
+#endif
+
 #endif
