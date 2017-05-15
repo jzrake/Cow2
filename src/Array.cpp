@@ -1,18 +1,20 @@
 #include <iostream> // DEBUG
+#include <stdexcept>
 #include <memory>
-//#include <cassert>
 #include "Array.hpp"
 #include "DebugHelper.hpp"
 
-#define BOUNDS_CHECK(i, j, k, m, n) assert (true \
-&& 0 <= i && i < n1 \
-&& 0 <= j && j < n2 \
-&& 0 <= k && k < n3 \
-&& 0 <= m && m < n4 \
-&& 0 <= n && n < n5)
+
 #define INDEXC(i, j, k, m, n) (n5 * (n4 * (n3 * (n2 * i + j) + k) + m) + n)
 #define INDEXF(i, j, k, m, n) (n1 * (n2 * (n3 * (n4 * n + m) + k) + j) + i)
 #define INDEX(i, j, k, m, n) (ordering == 'C' ? INDEXC(i, j, k, m, n) : INDEXF(i, j, k, m, n))
+#define INDEX_ERROR(ii, nn) std::logic_error("i=" + std::to_string (ii) + " not in bounds [0 " + std::to_string (nn) + "]")
+#define BOUNDS_CHECK(i, j, k, m, n) do { \
+if ( !(0 <= i && i < n1)) throw INDEX_ERROR(i, n1);\
+if ( !(0 <= j && j < n2)) throw INDEX_ERROR(j, n2);\
+if ( !(0 <= k && k < n3)) throw INDEX_ERROR(k, n3);\
+if ( !(0 <= m && m < n4)) throw INDEX_ERROR(m, n4);\
+if ( !(0 <= n && n < n5)) throw INDEX_ERROR(n, n5); } while (0)
 
 using namespace Cow;
 
