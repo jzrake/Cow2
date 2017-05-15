@@ -1,6 +1,6 @@
 #include <iostream> // DEBUG
 #include <stdexcept>
-#include <memory>
+#include <cstring>
 #include "Array.hpp"
 #include "DebugHelper.hpp"
 

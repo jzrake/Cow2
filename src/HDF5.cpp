@@ -1,5 +1,6 @@
 #include <iostream> // DEBUG
 #include <cassert>
+#include <cstring>
 #include <hdf5.h>
 #include "HDF5.hpp"
 
