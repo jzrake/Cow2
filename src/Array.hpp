@@ -285,6 +285,11 @@ namespace Cow
         int size() const;
 
         /**
+        Return the number of elements along one of the axes.
+        */
+        int size (int axis) const;
+
+        /**
         Return the Array's shape as a 5-component array.
         */
         Shape shape() const;

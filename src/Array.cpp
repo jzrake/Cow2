@@ -317,6 +317,19 @@ int Array::size() const
     return n1 * n2 * n3 * n4 * n5;
 }
 
+int Array::size (int axis) const
+{
+    switch (axis)
+    {
+        case 0: return n1;
+        case 1: return n2;
+        case 2: return n3;
+        case 3: return n4;
+        case 4: return n5;
+        default: assert (false); return 0;
+    }
+}
+
 Shape Array::shape() const
 {
     return {{n1, n2, n3, n4, n5}};
