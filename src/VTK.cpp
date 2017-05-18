@@ -32,6 +32,8 @@ temperature 1 10 float
 
 
 
+
+// ============================================================================
 DataSet::DataSet (Cow::Shape meshShape) : meshShape (meshShape)
 {
     title = "title";
@@ -49,34 +51,30 @@ void DataSet::addField (std::string fieldName, Array data)
 
 void DataSet::write (std::ostream& stream) const
 {
-    auto fieldName = "fieldName";
     auto S = meshShape;
     stream << "# vtk DataFile Version 2.0\n";
     stream << title << "\n";
     stream << "ASCII\n";
     stream << "DATASET RECTILINEAR_GRID\n";
-    stream << "DIMENSIONS " << S[0] << " " << S[1] << " " << S[2] << "\n";
+    stream << "DIMENSIONS " << S[0] + 1 << " " << S[1] + 1 << " " << S[2] + 1 << "\n";
 
-    stream << "X_COORDINATES " << meshShape[0] << " float\n";
-    for (int n = 0; n < meshShape[0]; ++n) stream << n << " "; stream << "\n";
+    stream << "X_COORDINATES " << meshShape[0] + 1 << " float\n";
+    for (int n = 0; n < meshShape[0] + 1; ++n) stream << n << " "; stream << "\n";
 
-    stream << "Y_COORDINATES " << meshShape[1] << " float\n";
-    for (int n = 0; n < meshShape[1]; ++n) stream << n << " "; stream << "\n";
+    stream << "Y_COORDINATES " << meshShape[1] + 1 << " float\n";
+    for (int n = 0; n < meshShape[1] + 1; ++n) stream << n << " "; stream << "\n";
 
-    stream << "Z_COORDINATES " << meshShape[2] << " float\n";
-    for (int n = 0; n < meshShape[2]; ++n) stream << n << " "; stream << "\n";
+    stream << "Z_COORDINATES " << meshShape[2] + 1 << " float\n";
+    for (int n = 0; n < meshShape[2] + 1; ++n) stream << n << " "; stream << "\n";
 
-    stream << "FIELD " << fieldName << " " << dataFields.size() << "\n";
+    stream << "CELL_DATA " << S[0] * S[1] * S[2] << "\n";
 
     for (auto field : dataFields)
     {
-        auto& A = field.second;
-        int numComponents = 1;
-        int numElements = A.size();
-        
-        stream << field.first << " " << numComponents << " " << numElements << " float \n";
+        stream << "SCALARS " << field.first << " float\n";
+        stream << "LOOKUP_TABLE default\n";
 
-        for (auto x : A)
+        for (auto x : field.second)
         {
             stream << x << " ";
         }
