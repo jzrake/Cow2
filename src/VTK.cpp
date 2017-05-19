@@ -44,9 +44,18 @@ void DataSet::setTitle (std::string titleToUse)
     title = titleToUse;
 }
 
-void DataSet::addField (std::string fieldName, Array data)
+void DataSet::addScalarField (std::string fieldName, Array data)
 {
-    dataFields.emplace (fieldName, data);
+    scalarFields.emplace (fieldName, data);
+}
+
+void DataSet::addVectorField (std::string fieldName, Array data)
+{
+    if (data.size(3) != 3)
+    {
+        throw std::runtime_error ("VTK vector field must have shape[3] == 3");
+    }
+    vectorFields.emplace (fieldName, data);
 }
 
 void DataSet::write (std::ostream& stream) const
@@ -69,7 +78,7 @@ void DataSet::write (std::ostream& stream) const
 
     stream << "CELL_DATA " << S[0] * S[1] * S[2] << "\n";
 
-    for (auto field : dataFields)
+    for (auto field : scalarFields)
     {
         stream << "SCALARS " << field.first << " float\n";
         stream << "LOOKUP_TABLE default\n";
@@ -79,5 +88,22 @@ void DataSet::write (std::ostream& stream) const
             stream << x << " ";
         }
         stream << "\n";
+    }
+
+    for (auto field : vectorFields)
+    {
+        stream << "VECTORS " << field.first << " float\n";
+        const auto& A = field.second;
+
+        for (int k = 0; k < A.size(2); ++k)
+        {
+            for (int j = 0; j < A.size(1); ++j)
+            {
+                for (int i = 0; i < A.size(0); ++i)
+                {
+                    stream << A (i, j, k, 0) << " " << A (i, j, k, 1) << " " << A (i, j, k, 2) << std::endl;
+                }
+            }   
+        }
     }
 }

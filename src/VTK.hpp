@@ -21,11 +21,13 @@ class Cow::VTK::DataSet
 public:
     DataSet (Cow::Shape meshShape);
     void setTitle (std::string titleToUse);
-    void addField (std::string fieldName, Cow::Array data);
+    void addScalarField (std::string fieldName, Cow::Array data);
+    void addVectorField (std::string fieldName, Cow::Array data);
     void write (std::ostream& stream) const;
 private:
     Cow::Shape meshShape;
-    std::map<std::string, Cow::Array> dataFields;
+    std::map<std::string, Cow::Array> scalarFields;
+    std::map<std::string, Cow::Array> vectorFields;
     std::string title;
 };
 
