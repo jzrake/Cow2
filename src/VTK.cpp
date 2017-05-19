@@ -74,7 +74,7 @@ void DataSet::write (std::ostream& stream) const
         stream << "SCALARS " << field.first << " float\n";
         stream << "LOOKUP_TABLE default\n";
 
-        for (auto x : field.second)
+        for (auto x : field.second.transpose())
         {
             stream << x << " ";
         }
