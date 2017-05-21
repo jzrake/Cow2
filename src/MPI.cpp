@@ -104,6 +104,15 @@ void MpiCommunicator::inSequence (std::function<void (int)> callback) const
     }
 }
 
+void MpiCommunicator::onMasterOnly (std::function<void()> callback) const
+{
+    if (isThisMaster())
+    {
+        callback();
+    }
+    MPI_Barrier (internals->comm);
+}
+
 MpiCartComm MpiCommunicator::createCartesian (int ndims, std::vector<bool> axisIsDistributed)
 {
     std::vector<int> dims (ndims, 0);

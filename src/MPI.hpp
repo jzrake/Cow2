@@ -55,6 +55,12 @@ namespace Cow
         void inSequence (std::function<void (int)> callback) const;
 
         /**
+        Execute the given function on the master process, while other processes
+        wait.
+        */
+        void onMasterOnly (std::function<void()> callback) const;
+
+        /**
         Create a cartesian topology, with the given number of dimensions,
         consisting of the processes in this communicator. If axisIsDistributed
         is empty, then the topology will be distributed on all ndims axes.
