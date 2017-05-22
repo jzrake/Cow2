@@ -61,6 +61,10 @@ void DataSet::addVectorField (std::string fieldName, Array data)
 void DataSet::write (std::ostream& stream) const
 {
     auto S = meshShape;
+    double dx = 1.0 / meshShape[0];
+    double dy = 1.0 / meshShape[1];
+    double dz = 1.0 / meshShape[2];
+
     stream << "# vtk DataFile Version 2.0\n";
     stream << title << "\n";
     stream << "ASCII\n";
@@ -68,13 +72,13 @@ void DataSet::write (std::ostream& stream) const
     stream << "DIMENSIONS " << S[0] + 1 << " " << S[1] + 1 << " " << S[2] + 1 << "\n";
 
     stream << "X_COORDINATES " << meshShape[0] + 1 << " float\n";
-    for (int n = 0; n < meshShape[0] + 1; ++n) stream << n << " "; stream << "\n";
+    for (int n = 0; n < meshShape[0] + 1; ++n) stream << -0.5 + dx * n << " "; stream << "\n";
 
     stream << "Y_COORDINATES " << meshShape[1] + 1 << " float\n";
-    for (int n = 0; n < meshShape[1] + 1; ++n) stream << n << " "; stream << "\n";
+    for (int n = 0; n < meshShape[1] + 1; ++n) stream << -0.5 + dy * n << " "; stream << "\n";
 
     stream << "Z_COORDINATES " << meshShape[2] + 1 << " float\n";
-    for (int n = 0; n < meshShape[2] + 1; ++n) stream << n << " "; stream << "\n";
+    for (int n = 0; n < meshShape[2] + 1; ++n) stream << -0.5 + dz * n << " "; stream << "\n";
 
     stream << "CELL_DATA " << S[0] * S[1] * S[2] << "\n";
 
