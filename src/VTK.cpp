@@ -44,33 +44,58 @@ void DataSet::setTitle (std::string titleToUse)
     title = titleToUse;
 }
 
-void DataSet::addScalarField (std::string fieldName, Array data)
+void DataSet::addScalarField (std::string fieldName, Array data, MeshLocation location)
 {
-    scalarFields.emplace (fieldName, data);
+    switch (location)
+    {
+        case MeshLocation::cell: scalarFieldsCells.emplace (fieldName, data); break;
+        case MeshLocation::vert: scalarFieldsVerts.emplace (fieldName, data); break;
+        default: break;
+    }
 }
 
-void DataSet::addVectorField (std::string fieldName, Array data)
+void DataSet::addVectorField (std::string fieldName, Array data, MeshLocation location)
 {
     if (data.size(3) != 3)
     {
         throw std::runtime_error ("VTK vector field must have shape[3] == 3");
     }
-    vectorFields.emplace (fieldName, data);
+
+    switch (location)
+    {
+        case MeshLocation::cell: vectorFieldsCells.emplace (fieldName, data); break;
+        case MeshLocation::vert: vectorFieldsVerts.emplace (fieldName, data); break;
+        default: break;
+    }
 }
 
 void DataSet::write (std::ostream& stream) const
 {
     auto S = meshShape;
-    double dx = 1.0 / meshShape[0];
-    double dy = 1.0 / meshShape[1];
-    double dz = 1.0 / meshShape[2];
 
+    // This kludge must do until we pass mesh coordinates
+    double dx = meshShape[0] > 1 ? 1.0 / meshShape[0] : 1e-2;
+    double dy = meshShape[1] > 1 ? 1.0 / meshShape[1] : 1e-2;
+    double dz = meshShape[2] > 1 ? 1.0 / meshShape[2] : 1e-2;
+
+
+
+
+    // ------------------------------------------------------------------------
+    // Write header
+    // ------------------------------------------------------------------------
     stream << "# vtk DataFile Version 2.0\n";
     stream << title << "\n";
     stream << "ASCII\n";
     stream << "DATASET RECTILINEAR_GRID\n";
     stream << "DIMENSIONS " << S[0] + 1 << " " << S[1] + 1 << " " << S[2] + 1 << "\n";
 
+
+
+
+    // ------------------------------------------------------------------------
+    // Write coordinate data
+    // ------------------------------------------------------------------------
     stream << "X_COORDINATES " << meshShape[0] + 1 << " float\n";
     for (int n = 0; n < meshShape[0] + 1; ++n) stream << -0.5 + dx * n << " "; stream << "\n";
 
@@ -80,9 +105,15 @@ void DataSet::write (std::ostream& stream) const
     stream << "Z_COORDINATES " << meshShape[2] + 1 << " float\n";
     for (int n = 0; n < meshShape[2] + 1; ++n) stream << -0.5 + dz * n << " "; stream << "\n";
 
+
+
+
+    // ------------------------------------------------------------------------
+    // Write CELL data
+    // ------------------------------------------------------------------------
     stream << "CELL_DATA " << S[0] * S[1] * S[2] << "\n";
 
-    for (auto field : scalarFields)
+    for (auto field : scalarFieldsCells)
     {
         stream << "SCALARS " << field.first << " float\n";
         stream << "LOOKUP_TABLE default\n";
@@ -94,7 +125,7 @@ void DataSet::write (std::ostream& stream) const
         stream << "\n";
     }
 
-    for (auto field : vectorFields)
+    for (auto field : vectorFieldsCells)
     {
         stream << "VECTORS " << field.first << " float\n";
         const auto& A = field.second;
@@ -107,7 +138,44 @@ void DataSet::write (std::ostream& stream) const
                 {
                     stream << A (i, j, k, 0) << " " << A (i, j, k, 1) << " " << A (i, j, k, 2) << std::endl;
                 }
-            }   
+            }
+        }
+    }
+
+
+
+
+    // ------------------------------------------------------------------------
+    // Write POINT data
+    // ------------------------------------------------------------------------
+    stream << "POINT_DATA " << (S[0] + 1) * (S[1] + 1) * (S[2] + 1) << "\n";
+
+    for (auto field : scalarFieldsVerts)
+    {
+        stream << "SCALARS " << field.first << " float\n";
+        stream << "LOOKUP_TABLE default\n";
+
+        for (auto x : field.second.transpose())
+        {
+            stream << x << " ";
+        }
+        stream << "\n";
+    }
+
+    for (auto field : vectorFieldsVerts)
+    {
+        stream << "VECTORS " << field.first << " float\n";
+        const auto& A = field.second;
+
+        for (int k = 0; k < A.size(2); ++k)
+        {
+            for (int j = 0; j < A.size(1); ++j)
+            {
+                for (int i = 0; i < A.size(0); ++i)
+                {
+                    stream << A (i, j, k, 0) << " " << A (i, j, k, 1) << " " << A (i, j, k, 2) << std::endl;
+                }
+            }
         }
     }
 }

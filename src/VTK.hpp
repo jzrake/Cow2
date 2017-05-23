@@ -19,15 +19,18 @@ namespace Cow
 class Cow::VTK::DataSet
 {
 public:
+    enum class MeshLocation { vert, edge, face, cell };
     DataSet (Cow::Shape meshShape);
     void setTitle (std::string titleToUse);
-    void addScalarField (std::string fieldName, Cow::Array data);
-    void addVectorField (std::string fieldName, Cow::Array data);
+    void addScalarField (std::string fieldName, Cow::Array data, MeshLocation location=MeshLocation::cell);
+    void addVectorField (std::string fieldName, Cow::Array data, MeshLocation location=MeshLocation::cell);
     void write (std::ostream& stream) const;
 private:
     Cow::Shape meshShape;
-    std::map<std::string, Cow::Array> scalarFields;
-    std::map<std::string, Cow::Array> vectorFields;
+    std::map<std::string, Cow::Array> scalarFieldsCells;
+    std::map<std::string, Cow::Array> vectorFieldsCells;
+    std::map<std::string, Cow::Array> scalarFieldsVerts;
+    std::map<std::string, Cow::Array> vectorFieldsVerts;
     std::string title;
 };
 
