@@ -4,17 +4,22 @@
 #include "Array.hpp"
 #include "DebugHelper.hpp"
 
+// #define COW_DISABLE_BOUNDS_CHECK
 
 #define INDEXC(i, j, k, m, n) (n5 * (n4 * (n3 * (n2 * i + j) + k) + m) + n)
 #define INDEXF(i, j, k, m, n) (n1 * (n2 * (n3 * (n4 * n + m) + k) + j) + i)
 #define INDEX(i, j, k, m, n) (ordering == 'C' ? INDEXC(i, j, k, m, n) : INDEXF(i, j, k, m, n))
 #define INDEX_ERROR(ii, nn) std::logic_error(#ii "=" + std::to_string (ii) + " not in bounds [0 " + std::to_string (nn) + "]")
+#ifndef COW_DISABLE_BOUNDS_CHECK
 #define BOUNDS_CHECK(i, j, k, m, n) do { \
 if ( !(0 <= i && i < n1)) throw INDEX_ERROR(i, n1);\
 if ( !(0 <= j && j < n2)) throw INDEX_ERROR(j, n2);\
 if ( !(0 <= k && k < n3)) throw INDEX_ERROR(k, n3);\
 if ( !(0 <= m && m < n4)) throw INDEX_ERROR(m, n4);\
 if ( !(0 <= n && n < n5)) throw INDEX_ERROR(n, n5); } while (0)
+#else
+#define BOUNDS_CHECK(i, j, k, m, n) do { } while (0)
+#endif
 
 using namespace Cow;
 
@@ -546,6 +551,11 @@ const Array& Array::Reference::getArray() const
 const Region& Array::Reference::getRegion() const
 {
     return R;
+}
+
+Shape Array::Reference::shape() const
+{
+    return R.shape();
 }
 
 Array::Iterator Array::Reference::begin()

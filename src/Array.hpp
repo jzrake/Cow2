@@ -381,6 +381,11 @@ namespace Cow
             const Region& getRegion() const;
 
             /**
+            Return the referenced regions's shape, short for ref.getRegion().shape().
+            */
+            Shape shape() const;
+
+            /**
             Return an iterator to the beginning of the array. When
             incremented, the result is equivalent to a multidimensional loop
             over the referenced rgion.
