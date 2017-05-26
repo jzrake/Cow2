@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cassert>
 #include "Array.hpp"
 #include "MPI.hpp"
@@ -62,6 +63,12 @@ void testArray()
     {
         assert(Q[n] == S[n]);
     }
+
+    std::ofstream normal ("normal.bin");
+    std::ofstream swapped ("swapped.bin");
+
+    normal << S.getAllocation();
+    swapped << S.getAllocation().swapBytes (sizeof (double));
 }
 
 

@@ -95,6 +95,24 @@ std::string HeapAllocation::toString() const
     return message;
 }
 
+HeapAllocation HeapAllocation::swapBytes (std::size_t bytesPerEntry) const
+{
+    HeapAllocation M (numberOfBytes);
+    const int numEntries = numberOfBytes / bytesPerEntry;
+
+    for (int n = 0; n < numEntries; ++n)
+    {
+        const char* startSource = static_cast<const char*>(allocation) + n * bytesPerEntry;
+        char* startTarget = static_cast<char*>(M.allocation) + n * bytesPerEntry;
+
+        for (int b = 0; b < bytesPerEntry; ++b)
+        {
+            startTarget[bytesPerEntry - b - 1] = startSource[b];
+        }
+    }
+    return M;
+}
+
 
 
 

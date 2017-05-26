@@ -68,6 +68,12 @@ namespace Cow
         */
         std::string toString() const;
 
+        /**
+        Return a HeapAllocation whose binary data has opposite endian value as
+        this one.
+        */
+        HeapAllocation swapBytes (std::size_t bytesPerEntry) const;
+
         void* begin() { return allocation; }
 
         const void* begin() const { return allocation; }

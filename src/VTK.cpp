@@ -37,11 +37,17 @@ temperature 1 10 float
 DataSet::DataSet (Cow::Shape meshShape) : meshShape (meshShape)
 {
     title = "title";
+    binaryMode = true;
 }
 
 void DataSet::setTitle (std::string titleToUse)
 {
     title = titleToUse;
+}
+
+void DataSet::setUseBinaryFormat (bool shouldUseBinaryFormat)
+{
+    binaryMode = shouldUseBinaryFormat;
 }
 
 void DataSet::addScalarField (std::string fieldName, Array data, MeshLocation location)
@@ -76,7 +82,6 @@ void DataSet::addVectorField (std::string fieldName, Array data, MeshLocation lo
 
 void DataSet::write (std::ostream& stream) const
 {
-    bool binaryMode = true;
     auto S = meshShape;
 
     // This kludge must do until we pass mesh coordinates
@@ -84,13 +89,21 @@ void DataSet::write (std::ostream& stream) const
     double dy = meshShape[1] > 1 ? 1.0 / meshShape[1] : 1e-2;
     double dz = meshShape[2] > 1 ? 1.0 / meshShape[2] : 1e-2;
 
+    auto xCoordinates = Array (meshShape[0] + 1);
+    auto yCoordinates = Array (meshShape[1] + 1);
+    auto zCoordinates = Array (meshShape[2] + 1);
+
+    for (int n = 0; n < meshShape[0] + 1; ++n) xCoordinates[n] = -0.5 + dx * n;
+    for (int n = 0; n < meshShape[1] + 1; ++n) yCoordinates[n] = -0.5 + dy * n;
+    for (int n = 0; n < meshShape[2] + 1; ++n) zCoordinates[n] = -0.5 + dz * n;
+
 
 
 
     // ------------------------------------------------------------------------
     // Write header
     // ------------------------------------------------------------------------
-    stream << "# vtk DataFile Version 2.0\n";
+    stream << "# vtk DataFile Version 3.0\n";
     stream << title << "\n";
     stream << (binaryMode ? "BINARY\n" : "ASCII\n");
     stream << "DATASET RECTILINEAR_GRID\n";
@@ -102,14 +115,41 @@ void DataSet::write (std::ostream& stream) const
     // ------------------------------------------------------------------------
     // Write coordinate data
     // ------------------------------------------------------------------------
-    stream << "X_COORDINATES " << meshShape[0] + 1 << " float\n";
-    for (int n = 0; n < meshShape[0] + 1; ++n) stream << -0.5 + dx * n << " "; stream << "\n";
+    stream << "X_COORDINATES " << meshShape[0] + 1 << " double\n";
 
-    stream << "Y_COORDINATES " << meshShape[1] + 1 << " float\n";
-    for (int n = 0; n < meshShape[1] + 1; ++n) stream << -0.5 + dy * n << " "; stream << "\n";
+    if (binaryMode)
+    {
+        stream << xCoordinates.getAllocation().swapBytes (sizeof (double));
+    }
+    else
+    {
+        for (int n = 0; n < meshShape[0] + 1; ++n) stream << xCoordinates[n] << " ";
+    }
+    stream << std::endl;
 
-    stream << "Z_COORDINATES " << meshShape[2] + 1 << " float\n";
-    for (int n = 0; n < meshShape[2] + 1; ++n) stream << -0.5 + dz * n << " "; stream << "\n";
+    stream << "Y_COORDINATES " << meshShape[1] + 1 << " double\n";
+
+    if (binaryMode)
+    {
+        stream << yCoordinates.getAllocation().swapBytes (sizeof (double));
+    }
+    else
+    {
+        for (int n = 0; n < meshShape[1] + 1; ++n) stream << yCoordinates[n] << " ";
+    }
+    stream << std::endl;
+
+    stream << "Z_COORDINATES " << meshShape[2] + 1 << " double\n";
+
+    if (binaryMode)
+    {
+        stream << zCoordinates.getAllocation().swapBytes (sizeof (double));
+    }
+    else
+    {
+        for (int n = 0; n < meshShape[2] + 1; ++n) stream << zCoordinates[n] << " ";
+    }
+    stream << std::endl;
 
 
 
@@ -121,25 +161,32 @@ void DataSet::write (std::ostream& stream) const
 
     for (auto field : scalarFieldsCells)
     {
-        stream << "SCALARS " << field.first << " float\n";
+        stream << "SCALARS " << field.first << " double\n";
         stream << "LOOKUP_TABLE default\n";
-
-        for (auto x : field.second.transpose(0, 2))
-        {
-            stream << x << " ";
-        }
-        stream << "\n";
-    }
-
-    for (auto field : vectorFieldsCells)
-    {
-        stream << "VECTORS " << field.first << " float\n";
         auto Atranspose = field.second.transpose (0, 2);
 
         if (binaryMode)
         {
-            std::string binaryBuffer = Atranspose.getAllocation().toString();
-            stream.write (binaryBuffer.data(), binaryBuffer.size());
+            stream << Atranspose.getAllocation().swapBytes (sizeof (double)) << std::endl;
+        }
+        else
+        {
+            for (auto x : Atranspose)
+            {
+                stream << x << " ";
+            }
+            stream << std::endl;
+        }
+    }
+
+    for (auto field : vectorFieldsCells)
+    {
+        stream << "VECTORS " << field.first << " double\n";
+        auto Atranspose = field.second.transpose (0, 2);
+
+        if (binaryMode)
+        {
+            stream << Atranspose.getAllocation().swapBytes (sizeof (double)) << std::endl;
         }
         else
         {
@@ -160,24 +207,39 @@ void DataSet::write (std::ostream& stream) const
 
     for (auto field : scalarFieldsVerts)
     {
-        stream << "SCALARS " << field.first << " float\n";
+        stream << "SCALARS " << field.first << " double\n";
         stream << "LOOKUP_TABLE default\n";
+        auto Atranspose = field.second.transpose (0, 2);
 
-        for (auto x : field.second.transpose())
+        if (binaryMode)
         {
-            stream << x << " ";
+            stream << Atranspose.getAllocation().swapBytes (sizeof (double)) << std::endl;
         }
-        stream << "\n";
+        else
+        {
+            for (auto x : Atranspose)
+            {
+                stream << x << " ";
+            }
+            stream << std::endl;
+        }
     }
 
     for (auto field : vectorFieldsVerts)
     {
-        stream << "VECTORS " << field.first << " float\n";
+        stream << "VECTORS " << field.first << " double\n";
         auto Atranspose = field.second.transpose (0, 2);
 
-        for (auto it = Atranspose.begin(); it != Atranspose.end(); it += 3)
+        if (binaryMode)
         {
-            stream << it[0] << " " << it[1] << " " << it[2] << std::endl;
+            stream << Atranspose.getAllocation().swapBytes (sizeof (double)) << std::endl;
+        }
+        else
+        {
+            for (auto it = Atranspose.begin(); it != Atranspose.end(); it += 3)
+            {
+                stream << it[0] << " " << it[1] << " " << it[2] << std::endl;
+            }
         }
     }
 }

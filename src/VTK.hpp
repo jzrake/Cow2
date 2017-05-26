@@ -22,6 +22,7 @@ public:
     enum class MeshLocation { vert, edge, face, cell };
     DataSet (Cow::Shape meshShape);
     void setTitle (std::string titleToUse);
+    void setUseBinaryFormat (bool shouldUseBinaryFormat);
     void addScalarField (std::string fieldName, Cow::Array data, MeshLocation location=MeshLocation::cell);
     void addVectorField (std::string fieldName, Cow::Array data, MeshLocation location=MeshLocation::cell);
     void write (std::ostream& stream) const;
@@ -32,6 +33,7 @@ private:
     std::map<std::string, Cow::Array> scalarFieldsVerts;
     std::map<std::string, Cow::Array> vectorFieldsVerts;
     std::string title;
+    bool binaryMode;
 };
 
 #endif
