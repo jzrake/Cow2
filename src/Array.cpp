@@ -139,6 +139,11 @@ Region Region::empty()
     return R;
 }
 
+Region Region::whole (Shape shape)
+{
+    return Region().absolute (shape);
+}
+
 Region::Region()
 {
     for (int n = 0; n < 5; ++n)
@@ -362,6 +367,38 @@ Array Array::transpose() const
     for (int n = 0; n < n5; ++n)
     {
         A (n, m, k, j, i) = this->operator() (i, j, k, m, n);
+    }
+    return A;
+}
+
+Array Array::transpose (int axis1, int axis2) const
+{
+    Shape sourceShape = shape();
+    Shape targetShape = shape();
+    targetShape[axis1] = sourceShape[axis2];
+    targetShape[axis2] = sourceShape[axis1];
+
+    Array A (targetShape);
+    A.ordering = ordering;
+
+    for (int i = 0; i < n1; ++i)
+    for (int j = 0; j < n2; ++j)
+    for (int k = 0; k < n3; ++k)
+    for (int m = 0; m < n4; ++m)
+    for (int n = 0; n < n5; ++n)
+    {
+        Index sourceIndex {{i, j, k, m, n}};
+        Index targetIndex {{i, j, k, m, n}};
+        targetIndex[axis1] = sourceIndex[axis2];
+        targetIndex[axis2] = sourceIndex[axis1];
+
+        const int it = targetIndex[0];
+        const int jt = targetIndex[1];
+        const int kt = targetIndex[2];
+        const int mt = targetIndex[3];
+        const int nt = targetIndex[4];
+
+        A (it, jt, kt, mt, nt) = this->operator() (i, j, k, m, n);
     }
     return A;
 }

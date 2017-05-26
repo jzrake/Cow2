@@ -175,6 +175,11 @@ namespace Cow
         static Region empty();
 
         /**
+        Return an absolute region for the given shape.
+        */
+        static Region whole (Shape shape);
+
+        /**
         Construct a default region, which is relative and refers to the entire
         extent of its target.
         */
@@ -306,6 +311,11 @@ namespace Cow
         memory layout type as this.
         */
         Array transpose() const;
+
+        /**
+        Return an array with the pair of given axes transposed.
+        */
+        Array transpose (int axis1, int axis2) const;
 
         /**
         Extract a deep copy of the given relative or absolute region of this

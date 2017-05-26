@@ -36,6 +36,32 @@ void testArray()
 
     assert (A.size() == 0);
     assert (B.size() == 128);
+
+    auto S = Array (12, 13, 14, 1, 1);
+
+    for (int n = 0; n < S.size(); ++n)
+    {
+        S[n] = n;
+    }
+
+    auto T = S.transpose();
+    auto R = S.transpose (0, 1);
+    auto Q = R.transpose (0, 1); // should have Q == S
+
+    assert(T.size(0) == 1);
+    assert(T.size(1) == 1);
+    assert(T.size(2) == 14);
+    assert(T.size(3) == 13);
+    assert(T.size(4) == 12);
+    assert(R.size(0) == 13);
+    assert(R.size(1) == 12);
+    assert(Q.size(0) == S.size(0));
+    assert(Q.size(1) == S.size(1));
+
+    for (int n = 0; n < Q.size(); ++n)
+    {
+        assert(Q[n] == S[n]);
+    }
 }
 
 
@@ -176,12 +202,12 @@ int main (int argc, const char* argv[])
     MpiSession mpi;
     std::set_terminate (Cow::terminateWithBacktrace);
 
-    // testHeap();
-    // testArray();
-    // testHdf5();
+    testHeap();
+    testArray();
+    testHdf5();
     testDistributedUniformMesh();
-    // testIter();
-    // testSlicing();
+    testIter();
+    testSlicing();
 
     return 0;
 }
