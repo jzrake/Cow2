@@ -27,6 +27,16 @@ using namespace Cow;
 
 
 // ============================================================================
+std::ostream& operator<< (std::ostream &stream, const Cow::HeapAllocation &memory)
+{
+    stream.write (static_cast<const char*>(memory.begin()), memory.size());
+    return stream;
+}
+
+
+
+
+// ============================================================================
 HeapAllocation::HeapAllocation() : numberOfBytes (0)
 {
     allocation = nullptr;

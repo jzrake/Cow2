@@ -467,4 +467,7 @@ namespace Cow
     };
 };
 
+
+std::ostream& operator<< (std::ostream &stream, const Cow::HeapAllocation &memory);
+
 #endif

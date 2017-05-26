@@ -46,6 +46,11 @@ void DataSet::setTitle (std::string titleToUse)
 
 void DataSet::addScalarField (std::string fieldName, Array data, MeshLocation location)
 {
+    if (data.size(3) != 1)
+    {
+        throw std::runtime_error ("VTK vector field must have shape[3] == 1");
+    }
+
     switch (location)
     {
         case MeshLocation::cell: scalarFieldsCells.emplace (fieldName, data); break;
@@ -71,6 +76,7 @@ void DataSet::addVectorField (std::string fieldName, Array data, MeshLocation lo
 
 void DataSet::write (std::ostream& stream) const
 {
+    bool binaryMode = true;
     auto S = meshShape;
 
     // This kludge must do until we pass mesh coordinates
@@ -86,7 +92,7 @@ void DataSet::write (std::ostream& stream) const
     // ------------------------------------------------------------------------
     stream << "# vtk DataFile Version 2.0\n";
     stream << title << "\n";
-    stream << "ASCII\n";
+    stream << (binaryMode ? "BINARY\n" : "ASCII\n");
     stream << "DATASET RECTILINEAR_GRID\n";
     stream << "DIMENSIONS " << S[0] + 1 << " " << S[1] + 1 << " " << S[2] + 1 << "\n";
 
@@ -118,7 +124,7 @@ void DataSet::write (std::ostream& stream) const
         stream << "SCALARS " << field.first << " float\n";
         stream << "LOOKUP_TABLE default\n";
 
-        for (auto x : field.second.transpose())
+        for (auto x : field.second.transpose(0, 2))
         {
             stream << x << " ";
         }
@@ -128,16 +134,18 @@ void DataSet::write (std::ostream& stream) const
     for (auto field : vectorFieldsCells)
     {
         stream << "VECTORS " << field.first << " float\n";
-        const auto& A = field.second;
+        auto Atranspose = field.second.transpose (0, 2);
 
-        for (int k = 0; k < A.size(2); ++k)
+        if (binaryMode)
         {
-            for (int j = 0; j < A.size(1); ++j)
+            std::string binaryBuffer = Atranspose.getAllocation().toString();
+            stream.write (binaryBuffer.data(), binaryBuffer.size());
+        }
+        else
+        {
+            for (auto it = Atranspose.begin(); it != Atranspose.end(); it += 3)
             {
-                for (int i = 0; i < A.size(0); ++i)
-                {
-                    stream << A (i, j, k, 0) << " " << A (i, j, k, 1) << " " << A (i, j, k, 2) << std::endl;
-                }
+                stream << it[0] << " " << it[1] << " " << it[2] << std::endl;
             }
         }
     }
@@ -165,17 +173,11 @@ void DataSet::write (std::ostream& stream) const
     for (auto field : vectorFieldsVerts)
     {
         stream << "VECTORS " << field.first << " float\n";
-        const auto& A = field.second;
+        auto Atranspose = field.second.transpose (0, 2);
 
-        for (int k = 0; k < A.size(2); ++k)
+        for (auto it = Atranspose.begin(); it != Atranspose.end(); it += 3)
         {
-            for (int j = 0; j < A.size(1); ++j)
-            {
-                for (int i = 0; i < A.size(0); ++i)
-                {
-                    stream << A (i, j, k, 0) << " " << A (i, j, k, 1) << " " << A (i, j, k, 2) << std::endl;
-                }
-            }
+            stream << it[0] << " " << it[1] << " " << it[2] << std::endl;
         }
     }
 }
