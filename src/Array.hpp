@@ -402,6 +402,11 @@ namespace Cow
             Shape shape() const;
 
             /**
+            Convenience function for getRegion().getShapeVector().
+            */
+            std::vector<int> getShapeVector() const;
+
+            /**
             Return an iterator to the beginning of the array. When
             incremented, the result is equivalent to a multidimensional loop
             over the referenced rgion.

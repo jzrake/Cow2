@@ -623,6 +623,11 @@ Shape Array::Reference::shape() const
     return R.shape();
 }
 
+std::vector<int> Array::Reference::getShapeVector() const
+{
+    return getRegion().getShapeVector();
+}
+
 Array::Iterator Array::Reference::begin()
 {
     return Iterator (A, R);
