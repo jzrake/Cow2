@@ -608,6 +608,12 @@ const Array& Array::Reference::operator= (const Array& source)
     return source;
 }
 
+const Array::Reference& Array::Reference::operator= (const Array::Reference& source)
+{
+    A.insert (Array (source), R);
+    return source;
+}
+
 const Array& Array::Reference::getArray() const
 {
     return A;

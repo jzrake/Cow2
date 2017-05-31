@@ -67,7 +67,19 @@ namespace Cow
         Otherwise, the axes n for which (axisIsDistributed[n] == false) will
         have size 1 in the communicator.
         */
-        MpiCartComm createCartesian (int ndims, std::vector<bool> axisIsDistributed={});
+        MpiCartComm createCartesian (int ndims, std::vector<bool> axisIsDistributed={}) const;
+
+        /**
+        Return the minimum value over all participating processes, to all
+        processes. This invokes an MPI_Allreduce opertion.
+        */
+        double minimum (double x) const;
+
+        /**
+        Return the maximum value over all participating processes, to all
+        processes. This invokes an MPI_Allreduce opertion.
+        */
+        double maximum (double x) const;
 
     protected:
         MpiCommunicator (Internals*);

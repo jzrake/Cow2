@@ -113,7 +113,7 @@ void MpiCommunicator::onMasterOnly (std::function<void()> callback) const
     MPI_Barrier (internals->comm);
 }
 
-MpiCartComm MpiCommunicator::createCartesian (int ndims, std::vector<bool> axisIsDistributed)
+MpiCartComm MpiCommunicator::createCartesian (int ndims, std::vector<bool> axisIsDistributed) const
 {
     std::vector<int> dims (ndims, 0);
     std::vector<int> periods (ndims, 1);
@@ -135,6 +135,18 @@ MpiCartComm MpiCommunicator::createCartesian (int ndims, std::vector<bool> axisI
     MPI_Dims_create (size(), ndims, &dims[0]);
     MPI_Cart_create (internals->comm, ndims, &dims[0], &periods[0], reorder, &cart);
     return new Internals (cart, true);
+}
+
+double MpiCommunicator::minimum (double x) const
+{
+    MPI_Allreduce (MPI_IN_PLACE, &x, 1, MPI_DOUBLE, MPI_MIN, internals->comm);
+    return x;
+}
+
+double MpiCommunicator::maximum (double x) const
+{
+    MPI_Allreduce (MPI_IN_PLACE, &x, 1, MPI_DOUBLE, MPI_MAX, internals->comm);
+    return x;
 }
 
 

@@ -387,6 +387,11 @@ namespace Cow
             const Array& operator= (const Array& source);
 
             /**
+            Copy from a reference into another array.
+            */
+            const Array::Reference& operator= (const Array::Reference& source);
+
+            /**
             Return the referenced array.
             */
             const Array& getArray() const;
