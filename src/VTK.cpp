@@ -85,8 +85,10 @@ void DataSet::write (std::ostream& stream) const
     auto S = meshShape;
 
     // This kludge must do until we pass mesh coordinates
-    double dx = meshShape[0] > 1 ? 1.0 / meshShape[0] : 1e-2;
-    double dy = meshShape[1] > 1 ? 1.0 / meshShape[1] : 1e-2;
+    double Ax = meshShape[2] > 1 ? double (meshShape[2]) / meshShape[0] : 1.;
+    double Ay = meshShape[2] > 1 ? double (meshShape[2]) / meshShape[1] : 1.;
+    double dx = meshShape[0] > 1 ? 1.0 / meshShape[0] / Ax : 1e-2;
+    double dy = meshShape[1] > 1 ? 1.0 / meshShape[1] / Ay : 1e-2;
     double dz = meshShape[2] > 1 ? 1.0 / meshShape[2] : 1e-2;
 
     auto xCoordinates = Array (meshShape[0] + 1);

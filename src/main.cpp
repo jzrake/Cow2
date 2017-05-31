@@ -4,11 +4,11 @@
 #include "Array.hpp"
 #include "MPI.hpp"
 #include "HDF5.hpp"
-#include "DistributedUniformMesh.hpp"
 #include "Timer.hpp"
 #include "DebugHelper.hpp"
 
 using namespace Cow;
+
 
 
 
@@ -117,50 +117,6 @@ void testHdf5()
         auto nestedGroup = testFile.getGroup ("group1/nestedGroup");
         assert (nestedGroup.readInt ("property") == 12345);
     }
-}
-
-
-void testDistributedUniformMesh()
-{
-    auto world = MpiCommunicator::world();
-    auto cart = world.createCartesian (1);
-    auto guard = Cow::GuardZoneExtension();
-
-    guard.lower[0] = 2;
-    guard.upper[0] = 3;
-
-    auto mesh = DistributedUniformMesh ({128}, cart, guard);
-    auto shape = mesh.getLocalArrayShape();
-
-    cart.inSequence ([&] (int rank)
-    {
-        std::cout
-        << "MPI rank: "
-        << rank
-        << " shape: "
-        << shape[0] 
-        << " right: "
-        << cart.shift (0, 1)
-        << " left: "
-        << cart.shift (0, -1)
-        << std::endl;
-    });
-
-    auto mpiDouble = MpiDataType::nativeDouble();
-    auto mpiInt = MpiDataType::nativeInt();
-    assert (mpiDouble.size() == sizeof (double));
-    assert (mpiInt.size() == sizeof (int));
-
-    auto A = Array (12);
-
-    Region send;
-    Region recv;
-    send.lower[0] = -4;
-    send.upper[0] = -2;
-    recv.lower[0] =  0;
-    recv.upper[0] =  2;
-    
-    cart.shiftExchange (A, 0, 'R', send, recv);
 }
 
 

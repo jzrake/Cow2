@@ -75,6 +75,8 @@ namespace Cow
     };
 
 
+
+
     /**
     Class to encapulate certain responsibilities of an MPI cartesian topology.
     */
@@ -131,6 +133,7 @@ namespace Cow
 
 
 
+
     class MpiDataType
     {
     public:
@@ -161,6 +164,7 @@ namespace Cow
         MpiDataType (Internals*);
         std::shared_ptr<Internals> internals;
     };
+
 
 
 
