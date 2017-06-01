@@ -59,10 +59,20 @@ namespace Cow
         {
         public:
             /**
+            Return true if the object has a group with the given name.
+            */
+            bool hasGroup (std::string name) const;
+
+            /**
+            Return true if this location contains all the given groups.
+            */
+            bool hasGroups (std::vector<std::string> names) const;
+
+            /**
             Get a group below this location with the given name. The group
             must already exist.
             */
-            Group getGroup (std::string name);
+            Group getGroup (std::string name) const;
 
             /**
             Create a group below this location with the given name. The group
@@ -78,6 +88,16 @@ namespace Cow
         class DataSetCreator : public virtual ObjectProvider
         {
         public:
+            /**
+            Return true if the object has a data set with the given name.
+            */
+            bool hasDataSet (std::string name) const;
+
+            /**
+            Return true if this location contains all the given data sets.
+            */
+            bool hasDataSets (std::vector<std::string> names) const;
+
             /**
             Get a data set at this location with the given name. The data set
             must already exist.
@@ -116,13 +136,23 @@ namespace Cow
             */
             Array readArray (std::string name) const;
 
+            /**
+            Read several data sets and return an array with those data sets
+            stacked along the given axis. Each of the source arrays must have
+            the same size, and have size 1 along the stacked axis.
+            */
+            Array readArrays (std::vector<std::string> names, int stackedAxis) const;
+
             /** Write an integer to a new data set. */
             DataSet write (std::string name, int value);
 
             /** Write a double to a new data set. */
             DataSet write (std::string name, double value);
 
-            /** Write a string to a new data set. */
+            /**
+            Write a string to a new data set. If value is empty, the string
+            <NULL> is written.
+            */
             DataSet write (std::string name, std::string value);
 
             /** Write an array to a new data set. */

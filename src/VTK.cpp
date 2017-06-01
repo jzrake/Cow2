@@ -1,4 +1,5 @@
 #include <ostream>
+#include <cassert>
 #include "VTK.hpp"
 
 using namespace Cow;
@@ -34,23 +35,38 @@ temperature 1 10 float
 
 
 // ============================================================================
-DataSet::DataSet (Cow::Shape meshShape) : meshShape (meshShape)
+RectilinearGrid::RectilinearGrid (Cow::Shape cellsShape) : cellsShape (cellsShape)
 {
     title = "title";
     binaryMode = true;
+
+    pointCoordinates[0] = Array (cellsShape[0] + 1);
+    pointCoordinates[1] = Array (cellsShape[1] + 1);
+    pointCoordinates[2] = Array (cellsShape[2] + 1);
+
+    for (int n = 0; n < cellsShape[0] + 1; ++n) pointCoordinates[0][n] = n;
+    for (int n = 0; n < cellsShape[1] + 1; ++n) pointCoordinates[1][n] = n;
+    for (int n = 0; n < cellsShape[2] + 1; ++n) pointCoordinates[2][n] = n;
 }
 
-void DataSet::setTitle (std::string titleToUse)
+void RectilinearGrid::setPointCoordinates (Cow::Array coordinates, int axis)
+{
+    assert (0 <= axis && axis < 3);
+    assert (coordinates.size() == cellsShape[axis] + 1);
+    pointCoordinates[axis] = coordinates;
+}
+
+void RectilinearGrid::setTitle (std::string titleToUse)
 {
     title = titleToUse;
 }
 
-void DataSet::setUseBinaryFormat (bool shouldUseBinaryFormat)
+void RectilinearGrid::setUseBinaryFormat (bool shouldUseBinaryFormat)
 {
     binaryMode = shouldUseBinaryFormat;
 }
 
-void DataSet::addScalarField (std::string fieldName, Array data, MeshLocation location)
+void RectilinearGrid::addScalarField (std::string fieldName, Array data, MeshLocation location)
 {
     if (data.size(3) != 1)
     {
@@ -65,7 +81,7 @@ void DataSet::addScalarField (std::string fieldName, Array data, MeshLocation lo
     }
 }
 
-void DataSet::addVectorField (std::string fieldName, Array data, MeshLocation location)
+void RectilinearGrid::addVectorField (std::string fieldName, Array data, MeshLocation location)
 {
     if (data.size(3) != 3)
     {
@@ -80,24 +96,9 @@ void DataSet::addVectorField (std::string fieldName, Array data, MeshLocation lo
     }
 }
 
-void DataSet::write (std::ostream& stream) const
+void RectilinearGrid::write (std::ostream& stream) const
 {
-    auto S = meshShape;
-
-    // This kludge must do until we pass mesh coordinates
-    double Ax = meshShape[2] > 1 ? double (meshShape[2]) / meshShape[0] : 1.;
-    double Ay = meshShape[2] > 1 ? double (meshShape[2]) / meshShape[1] : 1.;
-    double dx = meshShape[0] > 1 ? 1.0 / meshShape[0] / Ax : 1e-2;
-    double dy = meshShape[1] > 1 ? 1.0 / meshShape[1] / Ay : 1e-2;
-    double dz = meshShape[2] > 1 ? 1.0 / meshShape[2] : 1e-2;
-
-    auto xCoordinates = Array (meshShape[0] + 1);
-    auto yCoordinates = Array (meshShape[1] + 1);
-    auto zCoordinates = Array (meshShape[2] + 1);
-
-    for (int n = 0; n < meshShape[0] + 1; ++n) xCoordinates[n] = -0.5 + dx * n;
-    for (int n = 0; n < meshShape[1] + 1; ++n) yCoordinates[n] = -0.5 + dy * n;
-    for (int n = 0; n < meshShape[2] + 1; ++n) zCoordinates[n] = -0.5 + dz * n;
+    auto S = cellsShape;
 
 
 
@@ -117,39 +118,39 @@ void DataSet::write (std::ostream& stream) const
     // ------------------------------------------------------------------------
     // Write coordinate data
     // ------------------------------------------------------------------------
-    stream << "X_COORDINATES " << meshShape[0] + 1 << " double\n";
+    stream << "X_COORDINATES " << cellsShape[0] + 1 << " double\n";
 
     if (binaryMode)
     {
-        stream << xCoordinates.getAllocation().swapBytes (sizeof (double));
+        stream << pointCoordinates[0].getAllocation().swapBytes (sizeof (double));
     }
     else
     {
-        for (int n = 0; n < meshShape[0] + 1; ++n) stream << xCoordinates[n] << " ";
+        for (int n = 0; n < cellsShape[0] + 1; ++n) stream << pointCoordinates[0][n] << " ";
     }
     stream << std::endl;
 
-    stream << "Y_COORDINATES " << meshShape[1] + 1 << " double\n";
+    stream << "Y_COORDINATES " << cellsShape[1] + 1 << " double\n";
 
     if (binaryMode)
     {
-        stream << yCoordinates.getAllocation().swapBytes (sizeof (double));
+        stream << pointCoordinates[1].getAllocation().swapBytes (sizeof (double));
     }
     else
     {
-        for (int n = 0; n < meshShape[1] + 1; ++n) stream << yCoordinates[n] << " ";
+        for (int n = 0; n < cellsShape[1] + 1; ++n) stream << pointCoordinates[1][n] << " ";
     }
     stream << std::endl;
 
-    stream << "Z_COORDINATES " << meshShape[2] + 1 << " double\n";
+    stream << "Z_COORDINATES " << cellsShape[2] + 1 << " double\n";
 
     if (binaryMode)
     {
-        stream << zCoordinates.getAllocation().swapBytes (sizeof (double));
+        stream << pointCoordinates[2].getAllocation().swapBytes (sizeof (double));
     }
     else
     {
-        for (int n = 0; n < meshShape[2] + 1; ++n) stream << zCoordinates[n] << " ";
+        for (int n = 0; n < cellsShape[2] + 1; ++n) stream << pointCoordinates[2][n] << " ";
     }
     stream << std::endl;
 

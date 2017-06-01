@@ -9,25 +9,27 @@ namespace Cow
 {
     namespace VTK
     {
-        class DataSet;
+        class RectilinearGrid;
     }
 }
 
 
 
 
-class Cow::VTK::DataSet
+class Cow::VTK::RectilinearGrid
 {
 public:
     enum class MeshLocation { vert, edge, face, cell };
-    DataSet (Cow::Shape meshShape);
+    RectilinearGrid (Cow::Shape cellsShape);
+    void setPointCoordinates (Cow::Array coordinates, int axis);
     void setTitle (std::string titleToUse);
     void setUseBinaryFormat (bool shouldUseBinaryFormat);
     void addScalarField (std::string fieldName, Cow::Array data, MeshLocation location=MeshLocation::cell);
     void addVectorField (std::string fieldName, Cow::Array data, MeshLocation location=MeshLocation::cell);
     void write (std::ostream& stream) const;
 private:
-    Cow::Shape meshShape;
+    Cow::Shape cellsShape;
+    Cow::Array pointCoordinates[3];
     std::map<std::string, Cow::Array> scalarFieldsCells;
     std::map<std::string, Cow::Array> vectorFieldsCells;
     std::map<std::string, Cow::Array> scalarFieldsVerts;

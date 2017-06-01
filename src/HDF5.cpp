@@ -35,7 +35,30 @@ public:
 
 
 // ============================================================================
-H5::Group H5::GroupCreator::getGroup (std::string name)
+bool H5::GroupCreator::hasGroup (std::string name) const
+{
+    auto object = getObject();
+    bool exists = H5Lexists (object->id, name.c_str(), H5P_DEFAULT);
+    
+    if (exists)
+    {
+        H5O_info_t info;
+        H5Oget_info_by_name (object->id, name.c_str(), &info, H5P_DEFAULT);
+        return info.type == H5O_TYPE_GROUP;
+    }
+    return false;
+}
+
+bool H5::GroupCreator::hasGroups (std::vector<std::string> names) const
+{
+    for (auto name : names)
+    {
+        if (! hasGroup (name)) return false;
+    }
+    return true;
+}
+
+H5::Group H5::GroupCreator::getGroup (std::string name) const
 {
     auto object = getObject();
     auto id = H5Gopen (object->id, name.c_str(), H5P_DEFAULT);
@@ -58,6 +81,29 @@ H5::DataSet H5::DataSetCreator::getDataSet (std::string name) const
     auto object = getObject();
     auto datasetId = H5Dopen (object->id, name.c_str(), H5P_DEFAULT);
     return H5::DataSet (new Object (datasetId, 'D'));
+}
+
+bool H5::DataSetCreator::hasDataSet (std::string name) const
+{
+    auto object = getObject();
+    bool exists = H5Lexists (object->id, name.c_str(), H5P_DEFAULT);
+
+    if (exists)
+    {
+        H5O_info_t info;
+        H5Oget_info_by_name (object->id, name.c_str(), &info, H5P_DEFAULT);
+        return info.type == H5O_TYPE_DATASET;
+    }
+    return false;
+}
+
+bool H5::DataSetCreator::hasDataSets (std::vector<std::string> names) const
+{
+    for (auto name : names)
+    {
+        if (! hasDataSet (name)) return false;
+    }
+    return true;
 }
 
 H5::DataSet H5::DataSetCreator::createDataSet (std::string name, const DataType& type)
@@ -125,8 +171,44 @@ Array H5::DataSetCreator::readArray (std::string name) const
     return array;
 }
 
+Array H5::DataSetCreator::readArrays (std::vector<std::string> names, int stackedAxis) const
+{
+    assert (! names.empty());
+    assert (0 <= stackedAxis && stackedAxis < 5);
+
+    auto shapeVector = getDataSet (names[0]).getSpace().getShape();
+    auto shape = Array::shapeFromVector (shapeVector);
+
+    if (shapeVector.size() >= 5)
+    {
+        throw std::runtime_error ("data set has too many dimensions");
+    }
+    if (shape[stackedAxis] != 1)
+    {
+        throw std::runtime_error ("cannot stack data along axis with size != 1");
+    }
+
+    auto R = Region();
+    shape[stackedAxis] = names.size();
+
+    auto A = Array (shape);
+
+    for (int n = 0; n < names.size(); ++n)
+    {
+        R.lower[stackedAxis] = n;
+        R.upper[stackedAxis] = n + 1;
+        A[R] = readArray (names[n]);
+    }
+
+    return A;
+}
+
 H5::DataSet H5::DataSetCreator::write (std::string name, std::string value)
 {
+    if (value.empty())
+    {
+        value = "<NULL>";
+    }
     auto ds = createDataSet (name, H5::DataType::nativeString (value.size()));
     auto buffer = HeapAllocation (value);
     ds.writeAll (buffer);
