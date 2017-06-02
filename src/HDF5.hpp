@@ -141,7 +141,8 @@ namespace Cow
             stacked along the given axis. Each of the source arrays must have
             the same size, and have size 1 along the stacked axis.
             */
-            Array readArrays (std::vector<std::string> names, int stackedAxis) const;
+            Array readArrays (std::vector<std::string> names, int stackedAxis,
+                Cow::Region sourceRegion=Region()) const;
 
             /** Write an integer to a new data set. */
             DataSet write (std::string name, int value);
@@ -213,6 +214,7 @@ namespace Cow
                 region is assumed to be absolute.
                 */
                 Reference (DataSet& D, Region R);
+                Array value() const;
                 const Array& operator= (Array& A);
                 const Array::Reference& operator= (const Array::Reference& ref);
             private:

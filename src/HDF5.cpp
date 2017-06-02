@@ -171,35 +171,30 @@ Array H5::DataSetCreator::readArray (std::string name) const
     return array;
 }
 
-Array H5::DataSetCreator::readArrays (std::vector<std::string> names, int stackedAxis) const
+Array H5::DataSetCreator::readArrays (std::vector<std::string> names, int stackedAxis,
+    Cow::Region sourceRegion) const
 {
     assert (! names.empty());
     assert (0 <= stackedAxis && stackedAxis < 5);
-
     auto shapeVector = getDataSet (names[0]).getSpace().getShape();
     auto shape = Array::shapeFromVector (shapeVector);
 
-    if (shapeVector.size() >= 5)
-    {
-        throw std::runtime_error ("data set has too many dimensions");
-    }
     if (shape[stackedAxis] != 1)
     {
         throw std::runtime_error ("cannot stack data along axis with size != 1");
     }
+    auto targetRegion = Region();
+    sourceRegion.ensureAbsolute (shape);
 
-    auto R = Region();
     shape[stackedAxis] = names.size();
-
     auto A = Array (shape);
 
     for (int n = 0; n < names.size(); ++n)
     {
-        R.lower[stackedAxis] = n;
-        R.upper[stackedAxis] = n + 1;
-        A[R] = readArray (names[n]);
+        targetRegion.lower[stackedAxis] = n;
+        targetRegion.upper[stackedAxis] = n + 1;
+        A[targetRegion] = getDataSet (names[n])[sourceRegion].value();
     }
-
     return A;
 }
 
@@ -320,6 +315,16 @@ H5::DataSet::Reference::Reference (DataSet& D, Region R) : D(D), R(R)
     assert (! R.isRelative());
 }
 
+Array H5::DataSet::Reference::value() const
+{
+    auto targetArray = Array (R.shape());
+    auto memory = DataSpace (targetArray.getShapeVector());
+    auto file = D.getSpace();
+    file.select (R);
+    D.readBuffer (memory, file, targetArray.getAllocation());
+    return targetArray;
+}
+
 const Array& H5::DataSet::Reference::operator= (Array& A)
 {
     this->operator= (A[Region()]);
@@ -330,12 +335,9 @@ const Array::Reference& H5::DataSet::Reference::operator= (const Array::Referenc
 {
     auto memory = DataSpace (ref.getArray().getShapeVector());
     auto file = D.getSpace();
-
     file.select (R);
     memory.select (ref.getRegion());
-
     D.writeBuffer (memory, file, ref.getArray().getAllocation());
-
     return ref;
 }
 

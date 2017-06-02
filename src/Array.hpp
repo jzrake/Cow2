@@ -220,6 +220,11 @@ namespace Cow
         Region absolute (std::vector<int> shapeVector) const;
 
         /**
+        If necessary, modify this region in-place to be absolute.
+        */
+        void ensureAbsolute (Shape shape);
+
+        /**
         Return the absolute range of indices (with stride information) covered
         for the given axis.
         */

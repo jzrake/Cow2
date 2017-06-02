@@ -247,6 +247,11 @@ Region Region::absolute (std::vector<int> shapeVector) const
     return R;
 }
 
+void Region::ensureAbsolute (Shape shape)
+{
+    *this = absolute (shape);
+}
+
 Range Region::range (int axis) const
 {
     return Range (lower[axis], upper[axis], stride[axis]);
