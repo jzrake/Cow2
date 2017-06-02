@@ -144,6 +144,9 @@ namespace Cow
             Array readArrays (std::vector<std::string> names, int stackedAxis,
                 Cow::Region sourceRegion=Region()) const;
 
+            /** Write a bool to a new data set. */
+            DataSet write (std::string name, bool value);
+
             /** Write an integer to a new data set. */
             DataSet write (std::string name, int value);
 
@@ -311,6 +314,7 @@ namespace Cow
         class DataType
         {
         public:
+            static DataType boolean();
             static DataType nativeInt();
             static DataType nativeDouble();
             static DataType nativeString (int length);

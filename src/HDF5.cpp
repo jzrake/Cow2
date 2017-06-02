@@ -198,14 +198,20 @@ Array H5::DataSetCreator::readArrays (std::vector<std::string> names, int stacke
     return A;
 }
 
-H5::DataSet H5::DataSetCreator::write (std::string name, std::string value)
+H5::DataSet H5::DataSetCreator::write (std::string name, bool value)
 {
-    if (value.empty())
-    {
-        value = "<NULL>";
-    }
-    auto ds = createDataSet (name, H5::DataType::nativeString (value.size()));
-    auto buffer = HeapAllocation (value);
+    auto ds = createDataSet (name, H5::DataType::boolean());
+    auto buffer = HeapAllocation (sizeof (bool));
+    buffer.getElement<bool>(0) = value;
+    ds.writeAll (buffer);
+    return ds;
+}
+
+H5::DataSet H5::DataSetCreator::write (std::string name, int value)
+{
+    auto ds = createDataSet (name, H5::DataType::nativeInt());
+    auto buffer = HeapAllocation (sizeof (int));
+    buffer.getElement<int>(0) = value;
     ds.writeAll (buffer);
     return ds;
 }
@@ -219,11 +225,14 @@ H5::DataSet H5::DataSetCreator::write (std::string name, double value)
     return ds;
 }
 
-H5::DataSet H5::DataSetCreator::write (std::string name, int value)
+H5::DataSet H5::DataSetCreator::write (std::string name, std::string value)
 {
-    auto ds = createDataSet (name, H5::DataType::nativeInt());
-    auto buffer = HeapAllocation (sizeof (int));
-    buffer.getElement<int>(0) = value;
+    if (value.empty())
+    {
+        value = "<NULL>";
+    }
+    auto ds = createDataSet (name, H5::DataType::nativeString (value.size()));
+    auto buffer = HeapAllocation (value);
     ds.writeAll (buffer);
     return ds;
 }
@@ -430,6 +439,12 @@ void H5::DataSpace::select (Region R)
 
 
 // ============================================================================
+H5::DataType H5::DataType::boolean()
+{
+    hid_t id = H5Tcopy (H5T_BITFIELD);
+    return new Object (id, 'T');
+}
+
 H5::DataType H5::DataType::nativeInt()
 {
     hid_t id = H5Tcopy (H5T_NATIVE_INT);
