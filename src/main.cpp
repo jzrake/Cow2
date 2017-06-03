@@ -87,10 +87,10 @@ void testHdf5()
             x = ++n;
         }
 
-        group1.write ("nameOfCat", "orange cat");
-        group1.write ("someData", A);
-        group1.write ("doubleParameter", 1.234);
-        group1.createGroup ("nestedGroup").write ("property", 12345);
+        group1.writeString ("nameOfCat", "orange cat");
+        group1.writeArray ("someData", A);
+        group1.writeDouble ("doubleParameter", 1.234);
+        group1.createGroup ("nestedGroup").writeInt ("property", 12345);
 
         auto dset1 = testFile.createDataSet ("dset1", A.getShapeVector());
         auto dset2 = testFile.createDataSet ("dset2", A.getShapeVector());
@@ -101,14 +101,14 @@ void testHdf5()
         dset1[region1] = A[region2];
         dset2[region1] = A;
 
-        testFile.write ("dset3", A);
-        testFile.write ("dset4", A[region1]);
+        testFile.writeArray ("dset3", A);
+        testFile.writeArray ("dset4", A[region1]);
     }
 
     {
         auto testFile = H5::File ("test.h5", "a");
         auto message = std::string ("this data was written in H5F_ACC_RDWR mode");
-        testFile.write ("writtenAfter", message);
+        testFile.writeString ("writtenAfter", message);
         assert (testFile.getDataSet ("writtenAfter").readAll().toString() == message);
 
         auto A = testFile.readArray ("dset3");
@@ -116,6 +116,18 @@ void testHdf5()
 
         auto nestedGroup = testFile.getGroup ("group1/nestedGroup");
         assert (nestedGroup.readInt ("property") == 12345);
+    }
+
+    {
+        Variant thing = "guy";
+        auto testFile = H5::File ("test.h5", "w");
+        testFile.writeBool ("chicken", true);
+        testFile.writeVariant ("thing", thing);
+
+        assert (testFile.readBool ("chicken") == true);
+        thing = testFile.readVariant ("thing");
+        assert (thing.getType() == 's');
+        assert (std::string (thing) == "guy");
     }
 }
 
@@ -168,7 +180,6 @@ int main (int argc, const char* argv[])
     testHeap();
     testArray();
     testHdf5();
-    testDistributedUniformMesh();
     testIter();
     testSlicing();
 

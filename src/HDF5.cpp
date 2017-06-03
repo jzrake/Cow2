@@ -140,6 +140,13 @@ H5::DataSet H5::DataSetCreator::createDataSet (std::string name, std::vector<int
     return H5::DataSet (new Object (datasetId, 'D'));
 }
 
+bool H5::DataSetCreator::readBool (std::string name) const
+{
+    auto ds = getDataSet (name);
+    auto buffer = ds.readAll();
+    return buffer.getElement<int>(0);
+}
+
 int H5::DataSetCreator::readInt (std::string name) const
 {
     auto ds = getDataSet (name);
@@ -159,6 +166,20 @@ std::string H5::DataSetCreator::readString (std::string name) const
     auto ds = getDataSet (name);
     auto buffer = ds.readAll();
     return buffer.toString();
+}
+
+Variant H5::DataSetCreator::readVariant (std::string name) const
+{
+    auto type = getDataSet (name).getType();
+
+    switch (H5Tget_class (type.object->id))
+    {
+        case H5T_BITFIELD: return readBool (name);
+        case H5T_INTEGER: return readInt (name);
+        case H5T_FLOAT: return readDouble (name);
+        case H5T_STRING: return readString (name);
+        default: throw std::runtime_error ("data set " + name + " cannot be read as a variant");
+    }
 }
 
 Array H5::DataSetCreator::readArray (std::string name) const
@@ -206,8 +227,8 @@ Array H5::DataSetCreator::readArrays (std::vector<std::string> names, int stacke
 H5::DataSet H5::DataSetCreator::writeBool (std::string name, bool value)
 {
     auto ds = createDataSet (name, H5::DataType::boolean());
-    auto buffer = HeapAllocation (sizeof (bool));
-    buffer.getElement<bool>(0) = value;
+    auto buffer = HeapAllocation (sizeof (int));
+    buffer.getElement<int>(0) = value;
     ds.writeAll (buffer);
     return ds;
 }
@@ -240,6 +261,19 @@ H5::DataSet H5::DataSetCreator::writeString (std::string name, std::string value
     auto buffer = HeapAllocation (value);
     ds.writeAll (buffer);
     return ds;
+}
+
+H5::DataSet H5::DataSetCreator::writeVariant (std::string name, Variant value)
+{
+    switch (value.getType())
+    {
+        case 'n': throw std::runtime_error ("cannot write null variant");
+        case 'b': return writeBool (name, value);
+        case 'i': return writeInt (name, value);
+        case 'd': return writeDouble (name, value);
+        case 's': return writeString (name, value);
+        default: assert (false);
+    }
 }
 
 H5::DataSet H5::DataSetCreator::writeArray (std::string name, const Array& A)
@@ -446,7 +480,7 @@ void H5::DataSpace::select (Region R)
 // ============================================================================
 H5::DataType H5::DataType::boolean()
 {
-    hid_t id = H5Tcopy (H5T_BITFIELD);
+    hid_t id = H5Tcopy (H5T_NATIVE_INT); // we use int for bool
     return new Object (id, 'T');
 }
 

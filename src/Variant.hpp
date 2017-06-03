@@ -20,6 +20,7 @@ public:
     Variant (std::string val) : stringVal (val), type ('s') {}
     Variant (const char* val) : stringVal (val), type ('s') {}
 
+    char getType() const { return type; }
     void fromString (const std::string& rep);
     void printToStream (std::ostream& stream) const;
     operator bool() const;

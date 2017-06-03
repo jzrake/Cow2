@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include "Array.hpp"
+#include "Variant.hpp"
 
 
 
@@ -115,54 +116,25 @@ namespace Cow
             DataSet createDataSet (std::string name, std::vector<int> shape);
 
             /**
-            Read the whole contents of the scalar data set and return it as an
-            integer.
-            */
-            int readInt (std::string name) const;
-
-            /**
-            Read the whole contents of the scalar data set and return it as a
-            string.
-            */
-            double readDouble (std::string name) const;
-
-            /**
-            Read the whole contents of the data set and return it as a string.
-            */
-            std::string readString (std::string name) const;
-
-            /**
-            Read the whole contents of the data set and return it as an array.
-            */
-            Array readArray (std::string name) const;
-
-            /**
             Read several data sets and return an array with those data sets
             stacked along the given axis. Each of the source arrays must have
             the same size, and have size 1 along the stacked axis.
             */
-            Array readArrays (std::vector<std::string> names, int stackedAxis,
-                Cow::Region sourceRegion=Region()) const;
+            Array readArrays (std::vector<std::string> names, int stackedAxis, Cow::Region sourceRegion=Region()) const;
 
-            /** Write a bool to a new data set. */
+            bool readBool (std::string name) const;
+            int readInt (std::string name) const;
+            double readDouble (std::string name) const;
+            std::string readString (std::string name) const;
+            Variant readVariant (std::string name) const;
+            Array readArray (std::string name) const;
+
             DataSet writeBool (std::string name, bool value);
-
-            /** Write an integer to a new data set. */
             DataSet writeInt (std::string name, int value);
-
-            /** Write a double to a new data set. */
             DataSet writeDouble (std::string name, double value);
-
-            /**
-            Write a string to a new data set. If value is empty, the string
-            <NULL> is written.
-            */
             DataSet writeString (std::string name, std::string value);
-
-            /** Write an array to a new data set. */
+            DataSet writeVariant (std::string name, Variant value);
             DataSet writeArray (std::string name, const Array& A);
-
-            /** Write an array to a new data set. */
             DataSet writeArray (std::string name, const Array::Reference reference);
         };
 

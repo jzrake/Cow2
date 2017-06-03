@@ -5,6 +5,7 @@ namespace Cow
 {
     void backtrace();
     void terminateWithBacktrace();
+    void terminateWithPrintException();
 }
 
 #ifndef COW_DEBUG_USE_CASSERT

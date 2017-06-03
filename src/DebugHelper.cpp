@@ -73,3 +73,20 @@ void Cow::terminateWithBacktrace()
     Cow::backtrace();
     exit (1);
 }
+
+void Cow::terminateWithPrintException()
+{
+    try
+    {
+        auto e = std::current_exception();
+
+        if (e)
+            std::rethrow_exception (e);
+    }
+    catch (std::exception& e)
+    {
+        std::cout << GUARD_STRING << std::endl;
+        std::cout << "Uncaught exception: "<< e.what() << std::endl;
+    }
+    exit (1);
+}
