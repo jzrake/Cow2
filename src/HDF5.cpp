@@ -198,7 +198,7 @@ Array H5::DataSetCreator::readArrays (std::vector<std::string> names, int stacke
     return A;
 }
 
-H5::DataSet H5::DataSetCreator::write (std::string name, bool value)
+H5::DataSet H5::DataSetCreator::writeBool (std::string name, bool value)
 {
     auto ds = createDataSet (name, H5::DataType::boolean());
     auto buffer = HeapAllocation (sizeof (bool));
@@ -207,7 +207,7 @@ H5::DataSet H5::DataSetCreator::write (std::string name, bool value)
     return ds;
 }
 
-H5::DataSet H5::DataSetCreator::write (std::string name, int value)
+H5::DataSet H5::DataSetCreator::writeInt (std::string name, int value)
 {
     auto ds = createDataSet (name, H5::DataType::nativeInt());
     auto buffer = HeapAllocation (sizeof (int));
@@ -216,7 +216,7 @@ H5::DataSet H5::DataSetCreator::write (std::string name, int value)
     return ds;
 }
 
-H5::DataSet H5::DataSetCreator::write (std::string name, double value)
+H5::DataSet H5::DataSetCreator::writeDouble (std::string name, double value)
 {
     auto ds = createDataSet (name, H5::DataType::nativeDouble());
     auto buffer = HeapAllocation (sizeof (double));
@@ -225,7 +225,7 @@ H5::DataSet H5::DataSetCreator::write (std::string name, double value)
     return ds;
 }
 
-H5::DataSet H5::DataSetCreator::write (std::string name, std::string value)
+H5::DataSet H5::DataSetCreator::writeString (std::string name, std::string value)
 {
     if (value.empty())
     {
@@ -237,14 +237,14 @@ H5::DataSet H5::DataSetCreator::write (std::string name, std::string value)
     return ds;
 }
 
-H5::DataSet H5::DataSetCreator::write (std::string name, const Array& A)
+H5::DataSet H5::DataSetCreator::writeArray (std::string name, const Array& A)
 {
     auto ds = createDataSet (name, A.getShapeVector());
     ds.writeAll (A.getAllocation());
     return ds;    
 }
 
-H5::DataSet H5::DataSetCreator::write (std::string name, const Array::Reference reference)
+H5::DataSet H5::DataSetCreator::writeArray (std::string name, const Array::Reference reference)
 {
     auto ds = createDataSet (name, reference.getRegion().getShapeVector());
     ds[Region()] = reference;

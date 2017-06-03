@@ -145,25 +145,25 @@ namespace Cow
                 Cow::Region sourceRegion=Region()) const;
 
             /** Write a bool to a new data set. */
-            DataSet write (std::string name, bool value);
+            DataSet writeBool (std::string name, bool value);
 
             /** Write an integer to a new data set. */
-            DataSet write (std::string name, int value);
+            DataSet writeInt (std::string name, int value);
 
             /** Write a double to a new data set. */
-            DataSet write (std::string name, double value);
+            DataSet writeDouble (std::string name, double value);
 
             /**
             Write a string to a new data set. If value is empty, the string
             <NULL> is written.
             */
-            DataSet write (std::string name, std::string value);
+            DataSet writeString (std::string name, std::string value);
 
             /** Write an array to a new data set. */
-            DataSet write (std::string name, const Array& A);
+            DataSet writeArray (std::string name, const Array& A);
 
             /** Write an array to a new data set. */
-            DataSet write (std::string name, const Array::Reference reference);
+            DataSet writeArray (std::string name, const Array::Reference reference);
         };
 
 
