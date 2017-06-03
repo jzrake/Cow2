@@ -177,17 +177,22 @@ Array H5::DataSetCreator::readArrays (std::vector<std::string> names, int stacke
     assert (! names.empty());
     assert (0 <= stackedAxis && stackedAxis < 5);
     auto shapeVector = getDataSet (names[0]).getSpace().getShape();
-    auto shape = Array::shapeFromVector (shapeVector);
+    auto sourceShape = Array::shapeFromVector (shapeVector);
 
-    if (shape[stackedAxis] != 1)
+    if (sourceRegion == Region())
+    {
+        sourceRegion = Region::whole (sourceShape);
+    }
+    if (sourceShape[stackedAxis] != 1)
     {
         throw std::runtime_error ("cannot stack data along axis with size != 1");
     }
-    auto targetRegion = Region();
-    sourceRegion.ensureAbsolute (shape);
 
-    shape[stackedAxis] = names.size();
-    auto A = Array (shape);
+    auto targetShape = sourceRegion.shape();
+    targetShape[stackedAxis] = names.size();
+
+    auto A = Array (targetShape);
+    auto targetRegion = Region();
 
     for (int n = 0; n < names.size(); ++n)
     {

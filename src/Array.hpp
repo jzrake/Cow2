@@ -194,8 +194,11 @@ namespace Cow
         /** Return true if the upper bound is relative to end. */
         bool isRelative() const;
 
-        /** Check if this range is empty. */
+        /** Check if this region is empty. */
         bool isEmpty() const;
+
+        /** Check if two regions are identical */
+        bool operator== (const Region& other) const;
 
         /**
         Return the number of elements along each axis, after strides are

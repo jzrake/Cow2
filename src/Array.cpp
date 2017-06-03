@@ -200,6 +200,11 @@ bool Region::isEmpty() const
     return true;
 }
 
+bool Region::operator== (const Region& other) const
+{
+    return upper == other.upper && lower == other.lower && stride == other.stride;
+}
+
 Shape Region::shape() const
 {
     return {{
