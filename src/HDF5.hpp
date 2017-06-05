@@ -111,9 +111,16 @@ namespace Cow
             DataSet createDataSet (std::string name, const DataType& type);
 
             /**
-            Create an array at this location with the given shape, and type of double.
+            Create an array data set at this location with the given shape,
+            and type of double.
             */
             DataSet createDataSet (std::string name, std::vector<int> shape);
+
+            /**
+            Create an array data set at this location with the given shape and
+            type.
+            */
+            DataSet createDataSet (std::string name, std::vector<int> shape, const DataType& type);
 
             /**
             Read several data sets and return an array with those data sets
@@ -128,6 +135,8 @@ namespace Cow
             std::string readString (std::string name) const;
             Variant readVariant (std::string name) const;
             Array readArray (std::string name) const;
+            std::vector<int> readVectorInt (std::string name);
+            std::vector<double> readVectorDouble (std::string name);
 
             DataSet writeBool (std::string name, bool value);
             DataSet writeInt (std::string name, int value);
@@ -136,6 +145,8 @@ namespace Cow
             DataSet writeVariant (std::string name, Variant value);
             DataSet writeArray (std::string name, const Array& A);
             DataSet writeArray (std::string name, const Array::Reference reference);
+            DataSet writeVectorInt (std::string name, const std::vector<int>& value);
+            DataSet writeVectorDouble (std::string name, const std::vector<double>& value);
         };
 
 

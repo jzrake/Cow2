@@ -140,6 +140,23 @@ H5::DataSet H5::DataSetCreator::createDataSet (std::string name, std::vector<int
     return H5::DataSet (new Object (datasetId, 'D'));
 }
 
+H5::DataSet H5::DataSetCreator::createDataSet (std::string name, std::vector<int> shape, const DataType& type)
+{
+    auto object = getObject();
+    auto space = DataSpace (shape);
+
+    hid_t datasetId = H5Dcreate (
+        object->id,
+        name.c_str(),
+        type.object->id,
+        space.object->id,
+        H5P_DEFAULT,
+        H5P_DEFAULT,
+        H5P_DEFAULT);
+
+    return H5::DataSet (new Object (datasetId, 'D')); 
+}
+
 bool H5::DataSetCreator::readBool (std::string name) const
 {
     auto ds = getDataSet (name);
@@ -190,6 +207,32 @@ Array H5::DataSetCreator::readArray (std::string name) const
     auto array = Array (shape);
     ds.readBuffer (space, space, array.getAllocation());
     return array;
+}
+
+std::vector<int> H5::DataSetCreator::readVectorInt (std::string name)
+{
+    auto heap = getDataSet (name).readAll();
+    auto size = heap.size() / sizeof (int);
+    auto vect = std::vector<int> (size);
+
+    for (unsigned int n = 0; n < size; ++n)
+    {
+        vect[n] = heap.getElement<int>(n);
+    }
+    return vect;
+}
+
+std::vector<double> H5::DataSetCreator::readVectorDouble (std::string name)
+{
+    auto heap = getDataSet (name).readAll();
+    auto size = heap.size() / sizeof (double);
+    auto vect = std::vector<double> (size);
+
+    for (unsigned int n = 0; n < size; ++n)
+    {
+        vect[n] = heap.getElement<double>(n);
+    }
+    return vect;
 }
 
 Array H5::DataSetCreator::readArrays (std::vector<std::string> names, int stackedAxis,
@@ -288,6 +331,32 @@ H5::DataSet H5::DataSetCreator::writeArray (std::string name, const Array::Refer
     auto ds = createDataSet (name, reference.getRegion().getShapeVector());
     ds[Region()] = reference;
     return ds;
+}
+
+H5::DataSet H5::DataSetCreator::writeVectorInt (std::string name, const std::vector<int>& value)
+{
+    auto heap = HeapAllocation (value.size() * sizeof (int));
+    auto dset = createDataSet (name, std::vector<int> (1, value.size()), DataType::nativeInt());
+
+    for (unsigned int n = 0; n < value.size(); ++n)
+    {
+        heap.getElement<int>(n) = value[n];
+    }
+    dset.writeAll (heap);
+    return dset;
+}
+
+H5::DataSet H5::DataSetCreator::writeVectorDouble (std::string name, const std::vector<double>& value)
+{
+    auto heap = HeapAllocation (value.size() * sizeof (double));
+    auto dset = createDataSet (name, std::vector<int> (1, value.size()), DataType::nativeDouble());
+
+    for (unsigned int n = 0; n < value.size(); ++n)
+    {
+        heap.getElement<double>(n) = value[n];
+    }
+    dset.writeAll (heap);
+    return dset;
 }
 
 
