@@ -1,13 +1,14 @@
 #include <iostream>
 #include <cstdlib>
 #include <stdexcept>
-#include <libunwind.h>
-#include <cxxabi.h>
 #include "DebugHelper.hpp"
 #define GUARD_STRING std::string (80, '-')
 
 
 
+#ifdef COW_HAVE_LIBUNWIND
+#include <libunwind.h>
+#include <cxxabi.h>
 void Cow::backtrace()
 {
     std::cout << GUARD_STRING << std::endl;
@@ -54,6 +55,14 @@ void Cow::backtrace()
         }
     }
 }
+#else
+void Cow::backtrace()
+{
+    std::cout << GUARD_STRING << std::endl;
+    std::cout << "No backtrace available (recompile with COW_HAVE_LIBUNWIND)\n";
+    std::cout << GUARD_STRING << std::endl;
+}
+#endif
 
 void Cow::terminateWithBacktrace()
 {

@@ -215,7 +215,7 @@ Array H5::DataSetCreator::readArrays (std::vector<std::string> names, int stacke
     auto A = Array (targetShape);
     auto targetRegion = Region();
 
-    for (int n = 0; n < names.size(); ++n)
+    for (unsigned int n = 0; n < names.size(); ++n)
     {
         targetRegion.lower[stackedAxis] = n;
         targetRegion.upper[stackedAxis] = n + 1;

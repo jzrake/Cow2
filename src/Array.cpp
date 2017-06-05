@@ -105,7 +105,7 @@ HeapAllocation HeapAllocation::swapBytes (std::size_t bytesPerEntry) const
         const char* startSource = static_cast<const char*>(allocation) + n * bytesPerEntry;
         char* startTarget = static_cast<char*>(M.allocation) + n * bytesPerEntry;
 
-        for (int b = 0; b < bytesPerEntry; ++b)
+        for (unsigned int b = 0; b < bytesPerEntry; ++b)
         {
             startTarget[bytesPerEntry - b - 1] = startSource[b];
         }
@@ -236,7 +236,7 @@ Region Region::absolute (std::vector<int> shapeVector) const
 {
     Region R = *this;
 
-    for (int n = 0; n < 5; ++n)
+    for (unsigned int n = 0; n < 5; ++n)
     {
         if (n < shapeVector.size())
         {
