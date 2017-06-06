@@ -123,6 +123,12 @@ namespace Cow
             DataSet createDataSet (std::string name, std::vector<int> shape, const DataType& type);
 
             /**
+            Iterate over all HDF5 locations below this one, invoking the given
+            callback with the name of the location.
+            */
+            void iterate (std::function<void (std::string)> callback);
+
+            /**
             Read several data sets and return an array with those data sets
             stacked along the given axis. Each of the source arrays must have
             the same size, and have size 1 along the stacked axis.
@@ -133,7 +139,7 @@ namespace Cow
             int readInt (std::string name) const;
             double readDouble (std::string name) const;
             std::string readString (std::string name) const;
-            Variant readVariant (std::string name) const;
+            Variant readVariant (std::string name) const; // DOWN
             Array readArray (std::string name) const;
             std::vector<int> readVectorInt (std::string name);
             std::vector<double> readVectorDouble (std::string name);
@@ -151,13 +157,15 @@ namespace Cow
 
 
         /**
-        A base class for locations that can create attributes.
+        A base class for locations that can create attributes (not yet
+        implemented).
         */
         class AttributeCreator : public virtual ObjectProvider
         {
         public:
             /**
-            Create a data set below this location with the given name and shape.
+            Create a data set below this location with the given name and
+            shape.
             */
             Attribute createAttribute (std::string name, const DataType& type);
         };
@@ -229,10 +237,14 @@ namespace Cow
             */
             void writeAll (const HeapAllocation& buffer) const;
 
-            /** Get a copy of this data set's data space. */
+            /**
+            Get a copy of this data set's data space.
+            */
             DataSpace getSpace() const;
 
-            /** Get a copy of this data set's data type. */
+            /**
+            Get a copy of this data set's data type.
+            */
             DataType getType() const;
 
             /**
@@ -305,6 +317,16 @@ namespace Cow
             /** Return the size in bytes of this data type. */
             std::size_t bytes() const;
 
+            /**
+            Return the clostest matching native data type through H5Tget_native.
+            */
+            DataType native() const;
+
+            /**
+            Equality overload: calls the H5Tequal function.
+            */
+            bool operator== (const DataType& other) const;
+
         private:
             friend class DataSet;
             friend class DataSetCreator;
@@ -342,12 +364,6 @@ namespace Cow
         */
         class Group : public GroupCreator, public DataSetCreator
         {
-        public:
-            /**
-            Create an attribute for this group. The data space is scalar.
-            */
-            Attribute createAttribute (std::string name, const DataType& type);
-
         private:
             friend class GroupCreator;
             Group (Object* object);

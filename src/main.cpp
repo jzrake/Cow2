@@ -119,15 +119,25 @@ void testHdf5()
     }
 
     {
-        Variant thing = "guy";
-        auto testFile = H5::File ("test.h5", "w");
-        testFile.writeBool ("chicken", true);
-        testFile.writeVariant ("thing", thing);
+        Variant blnvar = true;
+        Variant intvar = 234;
+        Variant dblvar = 3.12;
+        Variant strvar = "str";
 
-        assert (testFile.readBool ("chicken") == true);
-        thing = testFile.readVariant ("thing");
-        assert (thing.getType() == 's');
-        assert (std::string (thing) == "guy");
+        auto testFile = H5::File ("test.h5", "w");
+        testFile.writeVariant ("bln", blnvar);
+        testFile.writeVariant ("int", intvar);
+        testFile.writeVariant ("dbl", dblvar);
+        testFile.writeVariant ("str", strvar);
+
+        assert (bool        (testFile.readVariant ("bln")) == bool (true));
+        assert (            (testFile.readVariant ("bln").getType() == 'b'));
+        assert (int         (testFile.readVariant ("int")) == int (intvar));
+        assert (            (testFile.readVariant ("int").getType() == 'i'));
+        assert (double      (testFile.readVariant ("dbl")) == double (dblvar));
+        assert (            (testFile.readVariant ("dbl").getType() == 'd'));
+        assert (std::string (testFile.readVariant ("str")) == std::string (strvar));
+        assert (            (testFile.readVariant ("str").getType() == 's'));
     }
 }
 
@@ -141,7 +151,6 @@ template <class T> void timeLoopEvaluation (T ref, std::string message)
     {
         x = n++;
     }
-
     std::cout << message << ": " << timer.age() << " s" << std::endl;
 }
 

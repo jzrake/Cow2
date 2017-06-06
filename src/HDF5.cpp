@@ -157,6 +157,19 @@ H5::DataSet H5::DataSetCreator::createDataSet (std::string name, std::vector<int
     return H5::DataSet (new Object (datasetId, 'D')); 
 }
 
+void H5::DataSetCreator::iterate (std::function<void (std::string)> callback)
+{
+    auto op = [] (hid_t g_id, const char *name, const H5L_info_t *info, void *op_data) -> herr_t
+    {
+        auto op = static_cast<std::function<int (std::string)>*> (op_data);
+        (*op) (name);
+        return 0;
+    };
+    auto object = getObject();
+    auto idx = hsize_t (0);
+    H5Literate (object->id, H5_INDEX_NAME, H5_ITER_INC, &idx, op, &callback);
+}
+
 bool H5::DataSetCreator::readBool (std::string name) const
 {
     auto ds = getDataSet (name);
@@ -187,16 +200,17 @@ std::string H5::DataSetCreator::readString (std::string name) const
 
 Variant H5::DataSetCreator::readVariant (std::string name) const
 {
-    auto type = getDataSet (name).getType();
+    // This approach is a bit wasteful because many temporary objects are
+    // create. However, it allows the DataType class to have say over the
+    // mapping between C and HDF5 types; if boolean was changed to some other
+    // HDF5 type, this would not break.
+    auto dsNativeType = getDataSet (name).getType();
 
-    switch (H5Tget_class (type.object->id))
-    {
-        case H5T_BITFIELD: return readBool (name);
-        case H5T_INTEGER: return readInt (name);
-        case H5T_FLOAT: return readDouble (name);
-        case H5T_STRING: return readString (name);
-        default: throw std::runtime_error ("data set " + name + " cannot be read as a variant");
-    }
+    if (dsNativeType == DataType::boolean()) return readBool (name);
+    if (dsNativeType == DataType::nativeDouble()) return readDouble (name);
+    if (dsNativeType == DataType::nativeInt()) return readInt (name);
+    if (H5Tget_class (dsNativeType.object->id) == H5T_STRING) return readString (name);
+    throw std::runtime_error ("data set " + name + " cannot be read as a variant");
 }
 
 Array H5::DataSetCreator::readArray (std::string name) const
@@ -270,8 +284,8 @@ Array H5::DataSetCreator::readArrays (std::vector<std::string> names, int stacke
 H5::DataSet H5::DataSetCreator::writeBool (std::string name, bool value)
 {
     auto ds = createDataSet (name, H5::DataType::boolean());
-    auto buffer = HeapAllocation (sizeof (int));
-    buffer.getElement<int>(0) = value;
+    auto buffer = HeapAllocation (sizeof (hbool_t));
+    buffer.getElement<hbool_t>(0) = value;
     ds.writeAll (buffer);
     return ds;
 }
@@ -549,7 +563,7 @@ void H5::DataSpace::select (Region R)
 // ============================================================================
 H5::DataType H5::DataType::boolean()
 {
-    hid_t id = H5Tcopy (H5T_NATIVE_INT); // we use int for bool
+    hid_t id = H5Tcopy (H5T_NATIVE_HBOOL);
     return new Object (id, 'T');
 }
 
@@ -577,10 +591,21 @@ H5::DataType::DataType (Object* object) : object (object)
 
 }
 
- std::size_t H5::DataType::bytes() const
- {
-    return H5Tget_size (object->id);
- }
+std::size_t H5::DataType::bytes() const
+{
+return H5Tget_size (object->id);
+}
+
+H5::DataType H5::DataType::native() const
+{
+    return new Object (H5Tget_native_type (object->id, H5T_DIR_ASCEND), 'T');
+}
+
+bool H5::DataType::operator== (const DataType& other) const
+{
+    return H5Tequal (object->id, other.object->id);
+}
+
 
 
 
