@@ -149,6 +149,13 @@ double MpiCommunicator::maximum (double x) const
     return x;
 }
 
+std::vector<double> MpiCommunicator::sum (const std::vector<double>& A) const
+{
+    auto ret = A;
+    MPI_Allreduce (MPI_IN_PLACE, &ret[0], ret.size(), MPI_DOUBLE, MPI_SUM, internals->comm);
+    return ret;
+}
+
 
 
 

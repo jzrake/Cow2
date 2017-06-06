@@ -81,6 +81,12 @@ namespace Cow
         */
         double maximum (double x) const;
 
+        /**
+        Return a vector of quantities, each of which is summed over all
+        participating ranks.
+        */
+        std::vector<double> sum (const std::vector<double>& A) const;
+
     protected:
         MpiCommunicator (Internals*);
         std::shared_ptr<Internals> internals;
