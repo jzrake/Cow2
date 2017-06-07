@@ -15,8 +15,22 @@ std::ostream& Logger::log (std::string caller)
 {
     switch (mode)
     {
-        case ToStdout: if (! caller.empty()) { std::cout << "[" << caller << "] "; } return std::cout;
-        case ToFile: if (! caller.empty()) { stream << "[" << caller << "] "; } return stream;
+        case ToStdout:
+        {
+            if (! caller.empty())
+            {
+                std::cout << "[" << caller << "] ";
+            }
+            return std::cout;
+        }
+        case ToFile:
+        {
+            if (! caller.empty())
+            {
+                stream << "[" << caller << "] ";
+            }
+            return stream;
+        }
         case ToNullDevice: return nullStream;
     }
 }
@@ -34,7 +48,7 @@ void Logger::setLogToNull()
 
 void Logger::setLogToStdout()
 {
-    mode =  ToStdout;
+    mode = ToStdout;
 }
 
 void Logger::flush()
