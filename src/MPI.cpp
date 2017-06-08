@@ -122,6 +122,7 @@ MpiCartComm MpiCommunicator::createCartesian (int ndims, std::vector<bool> axisI
 
     // Set the dims array to have size 1 where axisIsDistributed is false. An
     // entry of 0 in dims causes MPI_Dims_create to decompose that axis.
+
     for (auto isDistributed : axisIsDistributed)
     {
         if (! isDistributed)
@@ -135,6 +136,14 @@ MpiCartComm MpiCommunicator::createCartesian (int ndims, std::vector<bool> axisI
     MPI_Dims_create (size(), ndims, &dims[0]);
     MPI_Cart_create (internals->comm, ndims, &dims[0], &periods[0], reorder, &cart);
     return new Internals (cart, true);
+}
+
+MpiCommunicator MpiCommunicator::split (int color) const
+{
+    int key = 0; // Determines rank ordering, 0 uses old ordering.
+    MPI_Comm comm;
+    MPI_Comm_split (internals->comm, color, key, &comm);
+    return new Internals (comm, true);
 }
 
 double MpiCommunicator::minimum (double x) const

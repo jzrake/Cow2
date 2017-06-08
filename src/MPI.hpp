@@ -70,6 +70,11 @@ namespace Cow
         MpiCartComm createCartesian (int ndims, std::vector<bool> axisIsDistributed={}) const;
 
         /**
+        Create a new communicator by calling MPI_Comm_split, with the given color.
+        */
+        MpiCommunicator split (int color) const;
+
+        /**
         Return the minimum value over all participating processes, to all
         processes. This invokes an MPI_Allreduce opertion.
         */
