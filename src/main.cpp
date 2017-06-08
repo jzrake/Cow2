@@ -1,6 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <cassert>
+
+#define COW_DEBUG_USE_CASSERT
 #include "Array.hpp"
 #include "MPI.hpp"
 #include "HDF5.hpp"
@@ -139,6 +141,15 @@ void testHdf5()
         assert (std::string (testFile.readVariant ("str")) == std::string (strvar));
         assert (            (testFile.readVariant ("str").getType() == 's'));
     }
+
+    {
+        auto A = Array (8, 8, 8);
+        auto dtype = H5::DataType::nativeDouble();
+        auto plist = H5::PropertyList::DataSetCreate().setChunk ({4, 4, 4});
+
+        auto testFile = H5::File ("test.h5", "w");
+        testFile.createDataSet ("chunked_array", A.getShapeVector(), dtype, plist);
+    }
 }
 
 
@@ -184,7 +195,7 @@ void testSlicing()
 int main (int argc, const char* argv[])
 {
     MpiSession mpi;
-    std::set_terminate (Cow::terminateWithBacktrace);
+    // std::set_terminate (Cow::terminateWithBacktrace);
 
     testHeap();
     testArray();

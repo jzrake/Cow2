@@ -29,7 +29,6 @@ namespace Cow
 
 
 
-
         // ====================================================================
         // Base classes for shared functionality
         // ====================================================================
@@ -50,6 +49,64 @@ namespace Cow
             Derived classes must implement this method.
             */
             virtual const Object* getObject() const = 0;
+        };
+
+
+        class PropertyList
+        {
+        public:
+            class Base : public ObjectProvider
+            {
+            public:
+                const Object* getObject() const override;
+            protected:
+                Base (long long typeIdentifier);
+            private:
+                std::shared_ptr<Object> object;
+            };
+
+            /**
+            A class that encapuslates an HDF5 property list created with
+            H5P_DATASET_CREATE.
+            */            
+            class DataSetCreate : public Base
+            {
+            public:
+                DataSetCreate();
+                DataSetCreate& setChunk (std::vector<int> dims);
+            };
+        };
+
+
+        /**
+        A class representing an HDF5 data type.
+        */
+        class DataType
+        {
+        public:
+            static DataType boolean();
+            static DataType nativeInt();
+            static DataType nativeDouble();
+            static DataType nativeString (int length);
+
+            /** Return the size in bytes of this data type. */
+            std::size_t bytes() const;
+
+            /**
+            Return the clostest matching native data type through H5Tget_native.
+            */
+            DataType native() const;
+
+            /**
+            Equality overload: calls the H5Tequal function.
+            */
+            bool operator== (const DataType& other) const;
+
+        private:
+            friend class DataSet;
+            friend class DataSetCreator;
+            DataType (Object* object);
+            std::shared_ptr<Object> object;
         };
 
 
@@ -89,6 +146,7 @@ namespace Cow
         class DataSetCreator : public virtual ObjectProvider
         {
         public:
+
             /**
             Return true if the object has a data set with the given name.
             */
@@ -108,19 +166,15 @@ namespace Cow
             /**
             Create a scalar data set at this location with the given type.
             */
-            DataSet createDataSet (std::string name, const DataType& type);
-
-            /**
-            Create an array data set at this location with the given shape,
-            and type of double.
-            */
-            DataSet createDataSet (std::string name, std::vector<int> shape);
+            DataSet createDataSet (std::string name, DataType type);
 
             /**
             Create an array data set at this location with the given shape and
             type.
             */
-            DataSet createDataSet (std::string name, std::vector<int> shape, const DataType& type);
+            DataSet createDataSet (std::string name, std::vector<int> shape,
+                DataType type=DataType::nativeDouble(),
+                PropertyList::DataSetCreate properties=PropertyList::DataSetCreate());
 
             /**
             Iterate over all HDF5 locations below this one, invoking the given
@@ -299,38 +353,6 @@ namespace Cow
             friend class DataSet;
             friend class DataSetCreator;
             DataSpace (Object* object);
-            std::shared_ptr<Object> object;
-        };
-
-
-        /**
-        A class representing an HDF5 data type.
-        */
-        class DataType
-        {
-        public:
-            static DataType boolean();
-            static DataType nativeInt();
-            static DataType nativeDouble();
-            static DataType nativeString (int length);
-
-            /** Return the size in bytes of this data type. */
-            std::size_t bytes() const;
-
-            /**
-            Return the clostest matching native data type through H5Tget_native.
-            */
-            DataType native() const;
-
-            /**
-            Equality overload: calls the H5Tequal function.
-            */
-            bool operator== (const DataType& other) const;
-
-        private:
-            friend class DataSet;
-            friend class DataSetCreator;
-            DataType (Object* object);
             std::shared_ptr<Object> object;
         };
 

@@ -23,6 +23,7 @@ public:
             case 'D': H5Dclose (id); break;
             case 'S': H5Sclose (id); break;
             case 'T': H5Tclose (id); break;
+            case 'P': H5Pclose (id); break;
             default: assert (false);
         }
     }
@@ -30,6 +31,32 @@ public:
     hid_t id;
     char type;
 };
+
+
+
+H5::PropertyList::Base::Base (long long typeIdentifier)
+{
+    hid_t id = H5Pcreate (typeIdentifier);
+    object.reset (new Object (id, 'P'));
+}
+
+const H5::Object* H5::PropertyList::Base::getObject() const
+{
+    return object.get();
+}
+
+
+
+
+// ============================================================================
+H5::PropertyList::DataSetCreate::DataSetCreate() : Base (H5P_DATASET_CREATE) {}
+
+H5::PropertyList::DataSetCreate& H5::PropertyList::DataSetCreate::setChunk (std::vector<int> dims)
+{
+    std::vector<hsize_t> hdims (dims.begin(), dims.end());
+    H5Pset_chunk (getObject()->id, hdims.size(), &hdims[0]);
+    return *this;
+}
 
 
 
@@ -106,13 +133,12 @@ bool H5::DataSetCreator::hasDataSets (std::vector<std::string> names) const
     return true;
 }
 
-H5::DataSet H5::DataSetCreator::createDataSet (std::string name, const DataType& type)
+H5::DataSet H5::DataSetCreator::createDataSet (std::string name, DataType type)
 {
-    auto object = getObject();
     auto space = DataSpace();
 
     hid_t datasetId = H5Dcreate (
-        object->id,
+        getObject()->id,
         name.c_str(),
         type.object->id,
         space.object->id,
@@ -123,38 +149,24 @@ H5::DataSet H5::DataSetCreator::createDataSet (std::string name, const DataType&
     return H5::DataSet (new Object (datasetId, 'D'));
 }
 
-H5::DataSet H5::DataSetCreator::createDataSet (std::string name, std::vector<int> shape)
+H5::DataSet H5::DataSetCreator::createDataSet (
+    std::string name,
+    std::vector<int> shape,
+    DataType type,
+    PropertyList::DataSetCreate properties)
 {
-    auto object = getObject();
     auto space = DataSpace (shape);
 
     hid_t datasetId = H5Dcreate (
-        object->id,
+        getObject()->id,
         name.c_str(),
         H5T_NATIVE_DOUBLE,
         space.object->id,
         H5P_DEFAULT,
-        H5P_DEFAULT,
+        properties.getObject()->id,
         H5P_DEFAULT);
 
     return H5::DataSet (new Object (datasetId, 'D'));
-}
-
-H5::DataSet H5::DataSetCreator::createDataSet (std::string name, std::vector<int> shape, const DataType& type)
-{
-    auto object = getObject();
-    auto space = DataSpace (shape);
-
-    hid_t datasetId = H5Dcreate (
-        object->id,
-        name.c_str(),
-        type.object->id,
-        space.object->id,
-        H5P_DEFAULT,
-        H5P_DEFAULT,
-        H5P_DEFAULT);
-
-    return H5::DataSet (new Object (datasetId, 'D')); 
 }
 
 void H5::DataSetCreator::iterate (std::function<void (std::string)> callback)
@@ -284,8 +296,8 @@ Array H5::DataSetCreator::readArrays (std::vector<std::string> names, int stacke
 H5::DataSet H5::DataSetCreator::writeBool (std::string name, bool value)
 {
     auto ds = createDataSet (name, H5::DataType::boolean());
-    auto buffer = HeapAllocation (sizeof (hbool_t));
-    buffer.getElement<hbool_t>(0) = value;
+    auto buffer = HeapAllocation (sizeof (unsigned char));
+    buffer.getElement<unsigned char>(0) = value;
     ds.writeAll (buffer);
     return ds;
 }
@@ -563,7 +575,7 @@ void H5::DataSpace::select (Region R)
 // ============================================================================
 H5::DataType H5::DataType::boolean()
 {
-    hid_t id = H5Tcopy (H5T_NATIVE_HBOOL);
+    hid_t id = H5Tcopy (H5T_NATIVE_UCHAR);
     return new Object (id, 'T');
 }
 
