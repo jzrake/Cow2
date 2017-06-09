@@ -14,7 +14,27 @@ namespace Cow
     class MpiCommunicator;
     class MpiCartComm;
     class MpiDataType;
+    class MpiRequest;
     class MpiSession;
+
+
+    /**
+    Class to encapulate certain responsibilities of an MPI request.
+    */
+    class MpiRequest
+    {
+    public:
+        ~MpiRequest();
+        void cancel();
+        void wait();
+        bool test();
+    private:
+        friend class MpiCommunicator;
+        struct Internals;
+        MpiRequest (Internals*);
+        std::shared_ptr<Internals> internals;
+    };
+
 
     /**
     Class to encapulate certain responsibilities of an MPI communicator.
@@ -22,7 +42,6 @@ namespace Cow
     class MpiCommunicator
     {
     public:
-        struct Internals;
         static MpiCommunicator world();
 
         /**
@@ -31,10 +50,14 @@ namespace Cow
         */
         MpiCommunicator();
 
-        /** Return the rank of this communicator. */
+        /**
+        Return the rank of this communicator.
+        */
         int rank() const;
 
-        /** Return the number of processes in this communicator. */
+        /**
+        Return the number of processes in this communicator.
+        */
         int size() const;
 
         /**
@@ -92,11 +115,22 @@ namespace Cow
         */
         std::vector<double> sum (const std::vector<double>& A) const;
 
+        /**
+        These methods are a draft of an interface for synchronous and
+        asynchronous send and receive operations. They are not implemented yet.
+        Consider having non-blocking sends and receives (post and request) keep
+        the request objects as member data in the communicator.
+        */
+        void sendArray (const Array& arrayToSend, int rank, int tag=0) const;
+        void postArray (const Array& arrayToPost, int rank, int tag=0) const;
+        Array receiveArray (int rank, int tag=0) const;
+        Array requestArray (int rank, int tag=0) const;
+
     protected:
+        struct Internals;
         MpiCommunicator (Internals*);
         std::shared_ptr<Internals> internals;
     };
-
 
 
 
@@ -125,10 +159,14 @@ namespace Cow
         */
         int shift (int axis, int offset) const;
 
-        /** Return the number of dimensions in the array of blocks. */
+        /**
+        Return the number of dimensions in the array of blocks.
+        */
         int getNumberOfDimensions() const;
 
-        /** Return the dimensions of the array of blocks. */
+        /**
+        Return the dimensions of the array of blocks.
+        */
         std::vector<int> getDimensions() const;
 
         /**
@@ -139,7 +177,7 @@ namespace Cow
         std::vector<int> getCoordinates (int processRank=-1) const;
 
         /**
-        Excute an MPI send-recv operation by shifting the cartesian topology
+        Execute an MPI send-recv operation by shifting the cartesian topology
         along the given axis. Data will be sent in the direction specified, by
         either 'L' or 'R'. For example, if sendDirection is 'R' then the
         region of A covered by 'send' is sent to the process on the right,
@@ -156,12 +194,12 @@ namespace Cow
 
 
 
-
+    /**
+    Class to encapulate certain responsibilities of an MPI data type.
+    */
     class MpiDataType
     {
     public:
-        struct Internals;
-
         static MpiDataType nativeInt();
         static MpiDataType nativeDouble();
 
@@ -184,6 +222,7 @@ namespace Cow
 
     protected:
         friend class MpiCartComm;
+        struct Internals;
         MpiDataType (Internals*);
         std::shared_ptr<Internals> internals;
     };

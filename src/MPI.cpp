@@ -36,6 +36,26 @@ public:
 
 
 // ============================================================================
+struct MpiRequest::Internals
+{
+public:
+    Internals (MPI_Request request) : request (request)
+    {
+
+    }
+
+    ~Internals()
+    {
+        MPI_Request_free (&request);
+    }
+
+    MPI_Request request;
+};
+
+
+
+
+// ============================================================================
 struct MpiDataType::Internals
 {
 public:
@@ -58,6 +78,39 @@ public:
 
     MPI_Datatype type;
 };
+
+
+
+
+// ============================================================================
+MpiRequest::MpiRequest (Internals* internals) : internals (internals)
+{
+
+}
+
+MpiRequest::~MpiRequest()
+{
+
+}
+
+void MpiRequest::cancel()
+{
+    MPI_Cancel (&internals->request);
+}
+
+void MpiRequest::wait()
+{
+    MPI_Status status;
+    MPI_Wait (&internals->request, &status);
+}
+
+bool MpiRequest::test()
+{
+    int result;
+    MPI_Status status;
+    MPI_Test (&internals->request, &result, &status);
+    return result;
+}
 
 
 
