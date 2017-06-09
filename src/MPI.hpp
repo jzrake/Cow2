@@ -19,20 +19,75 @@ namespace Cow
 
 
     /**
-    Class to encapulate certain responsibilities of an MPI request.
+    A mirror of the MPI_Status data structure, but also with flag which
+    indicates the result of probe and test calls.
+    */
+    class MpiStatus
+    {
+    public:
+        int flag;
+        int count;
+        int cancelled;
+        int source;
+        int tag;
+        int error;
+    };
+
+
+    /**
+    Class to encapulate certain responsibilities of an MPI request, which
+    facilitate non-blocking communications. There are helpful resources at
+    this link:
+
+    https://cvw.cac.cornell.edu/mpip2p/waittestfree
     */
     class MpiRequest
     {
     public:
+        /**
+        Destructor, called when the request object goes out of scope. Will log
+        a message to stderr if going out of scope before the request has been
+        completed or canceled, which acts as some built-in assurance that
+        dangling request handles are not accumulating in the MPI system.
+        */
         ~MpiRequest();
+
+        /**
+        Cancels the request. It is safe for the requeset to go out of scope
+        after this call.
+        */
         void cancel();
+
+        /**
+        Blocking call that returns only when a specified operation has been
+        completed (e.g., the send buffer is safe to access). This call should
+        be inserted at the point where the next section of code depends on the
+        buffer, because it forces the process to block until the buffer is
+        ready. After this function returns, it is safe for the request to go
+        out of scope.
+        */
         void wait();
+
+        /**
+        Non-blocking counterpart to wait. Returns true if the request has been
+        completed. If it has, then test also deactivates the request; it is safe
+        for the request to go out of scope.
+        */
         bool test();
+
+        /**
+        Calls MPI_Request_get_status, which returns the status of the request
+        without triggering completion of the message. Even if this method
+        returns true, it is still necessary to call test() before alloing the
+        object to go out of scope.
+        */
+        bool getStatus() const;
+
     private:
         friend class MpiCommunicator;
         struct Internals;
         MpiRequest (Internals*);
-        std::shared_ptr<Internals> internals;
+        std::unique_ptr<Internals> internals;
     };
 
 
@@ -121,10 +176,10 @@ namespace Cow
         Consider having non-blocking sends and receives (post and request) keep
         the request objects as member data in the communicator.
         */
-        void sendArray (const Array& arrayToSend, int rank, int tag=0) const;
-        void postArray (const Array& arrayToPost, int rank, int tag=0) const;
-        Array receiveArray (int rank, int tag=0) const;
-        Array requestArray (int rank, int tag=0) const;
+        void send (const HeapAllocation& bufferToSend, int rank, int tag=0) const;
+        MpiRequest post (const HeapAllocation& bufferToPost, int rank, int tag=0) const;
+        HeapAllocation receive (int rank, int tag=0) const;
+        MpiRequest request (int rank, int tag=0) const;
 
     protected:
         struct Internals;

@@ -90,28 +90,49 @@ MpiRequest::MpiRequest (Internals* internals) : internals (internals)
 
 MpiRequest::~MpiRequest()
 {
-
+    if (! test())
+    {
+        std::cerr
+        << "Warning: an MPI request is going out of scope "
+        << "before being fulfilled."
+        << std::endl;
+    }
 }
 
 void MpiRequest::cancel()
 {
+    // Note this function takes a pointer to the request handle, as it intends
+    // to modify its value if the request is fulfilled.
     MPI_Cancel (&internals->request);
 }
 
 void MpiRequest::wait()
 {
+    // Note this function takes a pointer to the request handle, as it intends
+    // to modify its value if the request is fulfilled.
     MPI_Status status;
     MPI_Wait (&internals->request, &status);
 }
 
 bool MpiRequest::test()
 {
+    // Note this function takes a pointer to the request handle, as it intends
+    // to modify its value if the request is fulfilled.
     int result;
     MPI_Status status;
     MPI_Test (&internals->request, &result, &status);
     return result;
 }
 
+bool MpiRequest::getStatus() const
+{
+    // Note this function does *not* take a pointer to the request handle, as
+    // it does not modify its value even if the request is fulfilled.
+    int result;
+    MPI_Status status;
+    MPI_Request_get_status (internals->request, &result, &status);
+    return result;
+}
 
 
 
