@@ -150,6 +150,15 @@ void testHdf5()
         auto testFile = H5::File ("test.h5", "w");
         testFile.createDataSet ("chunked_array", A.getShapeVector(), dtype, plist);
     }
+
+    {
+        auto testFile = H5::File ("test.h5", "w");
+        auto int_dset = testFile.createDataSet ("int_dataset", std::vector<int> (1, 10), H5::DataType::nativeInt());
+        auto dbl_dset = testFile.createDataSet ("dbl_dataset", std::vector<int> (1, 10), H5::DataType::nativeDouble());
+
+        assert (int_dset.getType().bytes() == sizeof (int));
+        assert (dbl_dset.getType().bytes() == sizeof (double));
+    }
 }
 
 

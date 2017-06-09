@@ -34,6 +34,8 @@ public:
 
 
 
+
+// ============================================================================
 H5::PropertyList::Base::Base (long long typeIdentifier)
 {
     hid_t id = H5Pcreate (typeIdentifier);
@@ -160,7 +162,7 @@ H5::DataSet H5::DataSetCreator::createDataSet (
     hid_t datasetId = H5Dcreate (
         getObject()->id,
         name.c_str(),
-        H5T_NATIVE_DOUBLE,
+        type.object->id,
         space.object->id,
         H5P_DEFAULT,
         properties.getObject()->id,

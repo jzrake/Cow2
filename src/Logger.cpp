@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 #include <fstream>
 #include "Logger.hpp"
@@ -32,6 +33,7 @@ std::ostream& Logger::log (std::string caller)
             return stream;
         }
         case ToNullDevice: return nullStream;
+        default: assert (false);
     }
 }
 
