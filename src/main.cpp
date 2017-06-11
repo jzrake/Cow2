@@ -189,15 +189,31 @@ void testIter()
 
 void testSlicing()
 {
-    auto source = Array ( 1, 12, 12);
-    auto target = Array (12, 12, 12);
-    auto R = Region();
+    {
+        auto source = Array ( 1, 12, 12);
+        auto target = Array (12, 12, 12);
+        auto R = Region();
 
-    R.lower[0] = 6;
-    R.upper[0] = 7;
+        R.lower[0] = 6;
+        R.upper[0] = 7;
 
-    target.insert (source, R);
-    target[R] = source;
+        target.insert (source, R);
+        target[R] = source;
+    }
+
+    {
+        auto A = Array (2, 4, 6, 3, 3);
+        auto G = Array (A.shape());
+        auto R = Region().withStride (3, A.size(3)).withStride (4, A.size (4));
+
+        const double* last = A.begin() - 9;
+
+        for (const auto& it : A[R])
+        {
+            assert (&it - last == 9);
+            last = &it;
+        }
+    }
 }
 
 

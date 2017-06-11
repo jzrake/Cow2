@@ -191,13 +191,34 @@ namespace Cow
         */
         Region();
 
-        /** Return true if the upper bound is relative to end. */
+        /**
+        Return a new region, with the lower bound on the given axis replaced.
+        */
+        Region withLower (int axis, int newLower) const;
+
+        /**
+        Return a new region, with the upper bound on the given axis replaced.
+        */
+        Region withUpper (int axis, int newUpper) const;
+
+        /**
+        Return a strided version of this region, along the given axis.
+        */
+        Region withStride (int axis, int newStride) const;
+
+        /**
+        Return true if the upper bound is relative to end.
+        */
         bool isRelative() const;
 
-        /** Check if this region is empty. */
+        /**
+        Check if this region is empty.
+        */
         bool isEmpty() const;
 
-        /** Check if two regions are identical */
+        /**
+        Check if two regions are identical.
+        */
         bool operator== (const Region& other) const;
 
         /**
@@ -284,16 +305,6 @@ namespace Cow
         const HeapAllocation& getAllocation() const { return memory; }
 
         /**
-        Set the memory layout to either 'C' or 'F' (C or Fortran) type
-        ordering. With 'C', the last index is contiguous in memory, while with
-        'F' it is the first index that is contiguous. This function does not
-        move any data in the internal buffer, so if the array is already
-        populated, then its contents will appear transposed in any subsequent
-        indexing.
-        */
-        void setOrdering (char orderingMode);
-
-        /**
         Return the total number of doubles in this array.
         */
         int size() const;
@@ -309,9 +320,9 @@ namespace Cow
         Shape shape() const;
 
         /**
-        Return the memory layout type, 'C' or 'F'.
+        Return the strides in memory along each axis.
         */
-        char getOrdering() const;
+        Shape strides() const;
 
         /**
         Return the shape of this array as a vector, with trailing axes that
@@ -484,9 +495,8 @@ namespace Cow
     private:
         /** @internal */
         static void copyRegion (Array& dst, const Array& src, Region R, char mode);
-
-        char ordering;
         int n1, n2, n3, n4, n5;
+        Shape S;
         HeapAllocation memory;
     };
 };

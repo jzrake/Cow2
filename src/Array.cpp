@@ -6,9 +6,8 @@
 
 // #define COW_DISABLE_BOUNDS_CHECK
 
-#define INDEXC(i, j, k, m, n) (n5 * (n4 * (n3 * (n2 * i + j) + k) + m) + n)
-#define INDEXF(i, j, k, m, n) (n1 * (n2 * (n3 * (n4 * n + m) + k) + j) + i)
-#define INDEX(i, j, k, m, n) (ordering == 'C' ? INDEXC(i, j, k, m, n) : INDEXF(i, j, k, m, n))
+//#define INDEX(i, j, k, m, n) (n5 * (n4 * (n3 * (n2 * i + j) + k) + m) + n)
+#define INDEX(i, j, k, m, n) (S[0] * i + S[1] * j + S[2] * k + S[3] * m + S[4] * n)
 #define INDEX_ERROR(ii, nn) std::logic_error(#ii "=" + std::to_string (ii) + " not in bounds [0 " + std::to_string (nn) + "]")
 #ifndef COW_DISABLE_BOUNDS_CHECK
 #define BOUNDS_CHECK(i, j, k, m, n) do { \
@@ -182,6 +181,30 @@ Region::Region()
     }
 }
 
+Region Region::withLower (int axis, int newLower) const
+{
+    assert (axis < 5);
+    auto R = *this;
+    R.lower[axis] = newLower;
+    return R;
+}
+
+Region Region::withUpper (int axis, int newUpper) const
+{
+    assert (axis < 5);
+    auto R = *this;
+    R.upper[axis] = newUpper;
+    return R;
+}
+
+Region Region::withStride (int axis, int newStride) const
+{
+    assert (axis < 5);
+    auto R = *this;
+    R.stride[axis] = newStride;
+    return R;
+}
+
 bool Region::isRelative() const
 {
     for (int n = 0; n < 5; ++n)
@@ -302,7 +325,6 @@ Array::Array (int n1, int n2, int n3, int n4) : Array (n1, n2, n3, n4, 1)
 }
 
 Array::Array (int n1, int n2, int n3, int n4, int n5) :
-ordering ('C'),
 n1 (n1),
 n2 (n2),
 n3 (n3),
@@ -314,12 +336,17 @@ memory (n1 * n2 * n3 * n4 * n5 * sizeof (double))
     {
         memory.getElement<double> (i) = 0.0;
     }
+    S[0] = n5 * n4 * n3 * n2;
+    S[1] = n5 * n4 * n3;
+    S[2] = n5 * n4;
+    S[3] = n5;
+    S[4] = 1;
 }
 
 Array::Array (const Array& other)
 {
     memory = other.memory;
-    ordering = other.ordering;
+    S = other.S;
     n1 = other.n1;
     n2 = other.n2;
     n3 = other.n3;
@@ -330,7 +357,7 @@ Array::Array (const Array& other)
 Array::Array (Array&& other)
 {
     memory = std::move (other.memory);
-    ordering = other.ordering;
+    S = other.S;
     n1 = other.n1;
     n2 = other.n2;
     n3 = other.n3;
@@ -344,7 +371,7 @@ Array& Array::operator= (const Array& other)
     if (&other != this)
     {
         memory = other.memory;
-        ordering = other.ordering;
+        S = other.S;
         n1 = other.n1;
         n2 = other.n2;
         n3 = other.n3;
@@ -352,12 +379,6 @@ Array& Array::operator= (const Array& other)
         n5 = other.n5;
     }
     return *this;
-}
-
-void Array::setOrdering (char orderingMode)
-{
-    assert (orderingMode == 'C' || orderingMode == 'F');
-    ordering = orderingMode;
 }
 
 int Array::size() const
@@ -383,9 +404,9 @@ Shape Array::shape() const
     return {{n1, n2, n3, n4, n5}};
 }
 
-char Array::getOrdering() const
+Shape Array::strides() const
 {
-    return ordering;
+    return S;
 }
 
 std::vector<int> Array::getShapeVector() const
@@ -396,7 +417,6 @@ std::vector<int> Array::getShapeVector() const
 Array Array::transpose() const
 {
     Array A (n5, n4, n3, n2, n1);
-    A.ordering = ordering;
 
     for (int i = 0; i < n1; ++i)
     for (int j = 0; j < n2; ++j)
@@ -417,7 +437,6 @@ Array Array::transpose (int axis1, int axis2) const
     targetShape[axis2] = sourceShape[axis1];
 
     Array A (targetShape);
-    A.ordering = ordering;
 
     for (int i = 0; i < n1; ++i)
     for (int j = 0; j < n2; ++j)
@@ -605,7 +624,6 @@ std::vector<int> Array::vectorFromShape (Shape shape)
 
 
 
-
 // ============================================================================
 Array::Reference::Reference (Array& A, Region R) : A (A), R (R)
 {
@@ -725,11 +743,10 @@ double* Array::Iterator::getAddress() const
     // Array::operator().
 
     const Index& I = currentIndex;
-    const char ordering = A.ordering;
-    const int n1 = A.n1;
-    const int n2 = A.n2;
-    const int n3 = A.n3;
-    const int n4 = A.n4;
-    const int n5 = A.n5;
+    const Shape& S = A.S;
+    // const int n2 = A.n2;
+    // const int n3 = A.n3;
+    // const int n4 = A.n4;
+    // const int n5 = A.n5;
     return &A.memory.getElement<double> (INDEX(I[0], I[1], I[2], I[3], I[4]));
 }
