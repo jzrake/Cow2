@@ -356,8 +356,17 @@ namespace Cow
 
         /**
         Insert all of the source array into the given region of this array.
+        The region argument may be omitted, in which case this array's data is
+        replaced completely. This operation may improve efficiency relative to
+        the assignment operator, since this array's HeapAllocation is reused.
         */
-        void insert (const Array& source, Region R);
+        void insert (const Array& source, Region R=Region());
+
+        /**
+        Copy data from the source region of A into the target region of this
+        array.
+        */
+        void copyFrom (const Array& A, Region sourceRegion, Region targetRegion=Region());
 
         /**
         Change the Array's shape, without modifying its data layout. The new
@@ -507,7 +516,7 @@ namespace Cow
 
     private:
         /** @internal */
-        static void copyRegion (Array& dst, const Array& src, Region R, char mode);
+        static void copyRegion (Array& dst, const Array& src, Region source, Region target);
         int n1, n2, n3, n4, n5;
         Shape S;
         HeapAllocation memory;

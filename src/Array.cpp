@@ -6,7 +6,6 @@
 
 // #define COW_DISABLE_BOUNDS_CHECK
 
-//#define INDEX(i, j, k, m, n) (n5 * (n4 * (n3 * (n2 * i + j) + k) + m) + n)
 #define INDEX(i, j, k, m, n) (S[0] * i + S[1] * j + S[2] * k + S[3] * m + S[4] * n)
 #define INDEX_ERROR(ii, nn) std::logic_error(#ii "=" + std::to_string (ii) + " not in bounds [0 " + std::to_string (nn) + ")")
 #ifndef COW_DISABLE_BOUNDS_CHECK
@@ -422,7 +421,7 @@ std::vector<int> Array::getShapeVector() const
 
 Array Array::transpose() const
 {
-    Array A (n5, n4, n3, n2, n1);
+    auto A = Array (n5, n4, n3, n2, n1);
 
     for (int i = 0; i < n1; ++i)
     for (int j = 0; j < n2; ++j)
@@ -437,12 +436,12 @@ Array Array::transpose() const
 
 Array Array::transpose (int axis1, int axis2) const
 {
-    Shape sourceShape = shape();
-    Shape targetShape = shape();
+    auto sourceShape = shape();
+    auto targetShape = shape();
     targetShape[axis1] = sourceShape[axis2];
     targetShape[axis2] = sourceShape[axis1];
 
-    Array A (targetShape);
+    auto A = Array (targetShape);
 
     for (int i = 0; i < n1; ++i)
     for (int j = 0; j < n2; ++j)
@@ -450,8 +449,8 @@ Array Array::transpose (int axis1, int axis2) const
     for (int m = 0; m < n4; ++m)
     for (int n = 0; n < n5; ++n)
     {
-        Index sourceIndex {{i, j, k, m, n}};
-        Index targetIndex {{i, j, k, m, n}};
+        auto sourceIndex = Index {{i, j, k, m, n}};
+        auto targetIndex = Index {{i, j, k, m, n}};
         targetIndex[axis1] = sourceIndex[axis2];
         targetIndex[axis2] = sourceIndex[axis1];
 
@@ -545,21 +544,33 @@ const double& Array::operator() (int i, int j, int k, int m, int n) const
 
 Array Array::extract (Region R) const
 {
-    Region region = R.absolute (shape());
-    Array A (region.shape());
-    copyRegion (A, *this, region, 'A');
+    R.ensureAbsolute (shape());
+    auto A = Array (R.shape());
+    copyRegion (A, *this, Region::whole (shape()), R);
     return A;
 }
 
 void Array::insert (const Array& source, Region R)
 {
-    Region region = R.absolute (shape());
+    R.ensureAbsolute (shape());
 
-    if (source.shape() != region.shape())
+    if (source.shape() != R.shape())
     {
         throw std::logic_error ("source and target regions have different shapes");
     }
-    copyRegion (*this, source, region, 'B');
+    copyRegion (*this, source, R, Region::whole (shape()));
+}
+
+void Array::copyFrom (const Array&A, Region source, Region target)
+{
+    source.ensureAbsolute (A.shape());
+    target.ensureAbsolute (shape());
+
+    if (source.shape() != target.shape())
+    {
+        throw std::logic_error ("source and target regions have different shapes");
+    }
+    copyRegion (*this, A, target, source);
 }
 
 void Array::reshape (int n1_, int n2_, int n3_, int n4_, int n5_)
@@ -580,40 +591,18 @@ void Array::reshape (int n1_, int n2_, int n3_, int n4_, int n5_)
     S[4] = 1;
 }
 
-void Array::copyRegion (Array& dst, const Array& src, Region R, char mode)
+void Array::copyRegion (Array& dst, const Array& src, Region R1, Region R0)
 {
-    assert (! R.isRelative());
+    assert (! R0.isRelative());
+    assert (! R1.isRelative());
 
-    const Range is = R.range (0);
-    const Range js = R.range (1);
-    const Range ks = R.range (2);
-    const Range ms = R.range (3);
-    const Range ns = R.range (4);
-    const int i0 = is.lower;
-    const int j0 = js.lower;
-    const int k0 = ks.lower;
-    const int m0 = ms.lower;
-    const int n0 = ns.lower;
-
-    for (int i = i0; i < is.upper; i += is.stride)
-    for (int j = j0; j < js.upper; j += js.stride)
-    for (int k = k0; k < ks.upper; k += ks.stride)
-    for (int m = m0; m < ms.upper; m += ms.stride)
-    for (int n = n0; n < ns.upper; n += ns.stride)
+    for (int i0 = R0.lower[0], i1 = R1.lower[0]; i0 < R0.upper[0] && i1 < R1.upper[0]; i0 += R0.stride[0], i1 += R1.stride[0])
+    for (int j0 = R0.lower[1], j1 = R1.lower[1]; j0 < R0.upper[1] && j1 < R1.upper[1]; j0 += R0.stride[1], j1 += R1.stride[1])
+    for (int k0 = R0.lower[2], k1 = R1.lower[2]; k0 < R0.upper[2] && k1 < R1.upper[2]; k0 += R0.stride[2], k1 += R1.stride[2])
+    for (int m0 = R0.lower[3], m1 = R1.lower[3]; m0 < R0.upper[3] && m1 < R1.upper[3]; m0 += R0.stride[3], m1 += R1.stride[3])
+    for (int n0 = R0.lower[4], n1 = R1.lower[4]; n0 < R0.upper[4] && n1 < R1.upper[4]; n0 += R0.stride[4], n1 += R1.stride[4])
     {
-        switch (mode)
-        {
-            case 'A': // Extract: the region refers to the source array.
-            {
-                dst (i - i0, j - j0, k - k0, m - m0, n - n0) = src (i, j, k, m, n);
-                break;
-            }
-            case 'B': // Insert: the region refers to the target array.
-            {
-                dst (i, j, k, m, n) = src (i - i0, j - j0, k - k0, m - m0, n - n0);
-                break;                
-            }
-        }
+        dst (i1, j1, k1, m1, n1) = src (i0, j0, k0, m0, n0);
     }
 }
 
@@ -763,12 +752,7 @@ double* Array::Iterator::getAddress() const
 {
     // Computing the index directly may be 10-20% faster than calling
     // Array::operator().
-
     const Index& I = currentIndex;
     const Shape& S = A.S;
-    // const int n2 = A.n2;
-    // const int n3 = A.n3;
-    // const int n4 = A.n4;
-    // const int n5 = A.n5;
     return &A.memory.getElement<double> (INDEX(I[0], I[1], I[2], I[3], I[4]));
 }
