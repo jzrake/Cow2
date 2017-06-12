@@ -228,6 +228,12 @@ namespace Cow
         Shape shape() const;
 
         /**
+        Return the total number of elements in the region, after strides
+        accounted for. The region is assumed to be absolute.
+        */
+        int size() const;
+
+        /**
         Return shape(), but with trailing axes of length 1 removed.
         */
         std::vector<int> getShapeVector() const;
@@ -354,6 +360,12 @@ namespace Cow
         void insert (const Array& source, Region R);
 
         /**
+        Change the Array's shape, without modifying its data layout. The new
+        size must equal the old size.
+        */
+        void reshape (int n1, int n2=1, int n3=1, int n4=1, int n5=1);
+
+        /**
         Return a trivial iterator to the beginning of the array.
         */
         double* begin() { return memory.begin<double>(); }
@@ -390,6 +402,7 @@ namespace Cow
 
         static Shape shapeFromVector (std::vector<int> shapeVector);
         static std::vector<int> vectorFromShape (Shape shape);
+
 
         class Reference
         {

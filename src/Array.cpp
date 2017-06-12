@@ -8,7 +8,7 @@
 
 //#define INDEX(i, j, k, m, n) (n5 * (n4 * (n3 * (n2 * i + j) + k) + m) + n)
 #define INDEX(i, j, k, m, n) (S[0] * i + S[1] * j + S[2] * k + S[3] * m + S[4] * n)
-#define INDEX_ERROR(ii, nn) std::logic_error(#ii "=" + std::to_string (ii) + " not in bounds [0 " + std::to_string (nn) + "]")
+#define INDEX_ERROR(ii, nn) std::logic_error(#ii "=" + std::to_string (ii) + " not in bounds [0 " + std::to_string (nn) + ")")
 #ifndef COW_DISABLE_BOUNDS_CHECK
 #define BOUNDS_CHECK(i, j, k, m, n) do { \
 if ( !(0 <= i && i < n1)) throw INDEX_ERROR(i, n1);\
@@ -236,6 +236,12 @@ Shape Region::shape() const
         range (2).size(),
         range (3).size(),
         range (4).size() }};
+}
+
+int Region::size() const
+{
+    auto S = shape();
+    return S[0] * S[1] * S[2] * S[3] * S[4];
 }
 
 std::vector<int> Region::getShapeVector() const
@@ -551,10 +557,27 @@ void Array::insert (const Array& source, Region R)
 
     if (source.shape() != region.shape())
     {
-        throw std::runtime_error ("source and target regions have different shapes");
+        throw std::logic_error ("source and target regions have different shapes");
     }
-
     copyRegion (*this, source, region, 'B');
+}
+
+void Array::reshape (int n1_, int n2_, int n3_, int n4_, int n5_)
+{
+    if (size() != n1_ * n2_ * n3_ * n4_ * n5_)
+    {
+        throw std::logic_error ("reshape operation would change array size");
+    }
+    n1 = n1_;
+    n2 = n2_;
+    n3 = n3_;
+    n4 = n4_;
+    n5 = n5_;
+    S[0] = n5 * n4 * n3 * n2;
+    S[1] = n5 * n4 * n3;
+    S[2] = n5 * n4;
+    S[3] = n5;
+    S[4] = 1;
 }
 
 void Array::copyRegion (Array& dst, const Array& src, Region R, char mode)
@@ -598,9 +621,8 @@ Shape Array::shapeFromVector (std::vector<int> shapeVector)
 {
     if (shapeVector.size() > 5)
     {
-        throw std::runtime_error ("shape vector must have size <= 5");
+        throw std::logic_error ("shape vector must have size <= 5");
     }
-
     return {{
         shapeVector.size() > 0 ? shapeVector[0] : 1,
         shapeVector.size() > 1 ? shapeVector[1] : 1,
