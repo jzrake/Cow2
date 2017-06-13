@@ -64,7 +64,7 @@ H5::PropertyList::DataSetCreate& H5::PropertyList::DataSetCreate::setChunk (std:
 
 
 // ============================================================================
-bool H5::GroupCreator::hasGroup (std::string name) const
+bool H5::Location::hasGroup (std::string name) const
 {
     auto object = getObject();
     bool exists = H5Lexists (object->id, name.c_str(), H5P_DEFAULT);
@@ -78,7 +78,7 @@ bool H5::GroupCreator::hasGroup (std::string name) const
     return false;
 }
 
-bool H5::GroupCreator::hasGroups (std::vector<std::string> names) const
+bool H5::Location::hasGroups (std::vector<std::string> names) const
 {
     for (auto name : names)
     {
@@ -87,32 +87,28 @@ bool H5::GroupCreator::hasGroups (std::vector<std::string> names) const
     return true;
 }
 
-H5::Group H5::GroupCreator::getGroup (std::string name) const
+H5::Group H5::Location::getGroup (std::string name) const
 {
     auto object = getObject();
     auto id = H5Gopen (object->id, name.c_str(), H5P_DEFAULT);
     return H5::Group (new Object (id, 'G'));    
 }
 
-H5::Group H5::GroupCreator::createGroup (std::string name)
+H5::Group H5::Location::createGroup (std::string name)
 {
     auto object = getObject();
     auto id = H5Gcreate (object->id, name.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     return H5::Group (new Object (id, 'G'));
 }
 
-
-
-
-// ============================================================================
-H5::DataSet H5::DataSetCreator::getDataSet (std::string name) const
+H5::DataSet H5::Location::getDataSet (std::string name) const
 {
     auto object = getObject();
     auto datasetId = H5Dopen (object->id, name.c_str(), H5P_DEFAULT);
     return H5::DataSet (new Object (datasetId, 'D'));
 }
 
-bool H5::DataSetCreator::hasDataSet (std::string name) const
+bool H5::Location::hasDataSet (std::string name) const
 {
     auto object = getObject();
     bool exists = H5Lexists (object->id, name.c_str(), H5P_DEFAULT);
@@ -126,7 +122,7 @@ bool H5::DataSetCreator::hasDataSet (std::string name) const
     return false;
 }
 
-bool H5::DataSetCreator::hasDataSets (std::vector<std::string> names) const
+bool H5::Location::hasDataSets (std::vector<std::string> names) const
 {
     for (auto name : names)
     {
@@ -135,7 +131,7 @@ bool H5::DataSetCreator::hasDataSets (std::vector<std::string> names) const
     return true;
 }
 
-H5::DataSet H5::DataSetCreator::createDataSet (std::string name, DataType type)
+H5::DataSet H5::Location::createDataSet (std::string name, DataType type)
 {
     auto space = DataSpace();
 
@@ -151,7 +147,7 @@ H5::DataSet H5::DataSetCreator::createDataSet (std::string name, DataType type)
     return H5::DataSet (new Object (datasetId, 'D'));
 }
 
-H5::DataSet H5::DataSetCreator::createDataSet (
+H5::DataSet H5::Location::createDataSet (
     std::string name,
     std::vector<int> shape,
     DataType type,
@@ -171,7 +167,7 @@ H5::DataSet H5::DataSetCreator::createDataSet (
     return H5::DataSet (new Object (datasetId, 'D'));
 }
 
-void H5::DataSetCreator::iterate (std::function<void (std::string)> callback)
+void H5::Location::iterate (std::function<void (std::string)> callback)
 {
     auto op = [] (hid_t g_id, const char *name, const H5L_info_t *info, void *op_data) -> herr_t
     {
@@ -184,35 +180,35 @@ void H5::DataSetCreator::iterate (std::function<void (std::string)> callback)
     H5Literate (object->id, H5_INDEX_NAME, H5_ITER_INC, &idx, op, &callback);
 }
 
-bool H5::DataSetCreator::readBool (std::string name) const
+bool H5::Location::readBool (std::string name) const
 {
     auto ds = getDataSet (name);
     auto buffer = ds.readAll();
     return buffer.getElement<int>(0);
 }
 
-int H5::DataSetCreator::readInt (std::string name) const
+int H5::Location::readInt (std::string name) const
 {
     auto ds = getDataSet (name);
     auto buffer = ds.readAll();
     return buffer.getElement<int>(0);
 }
 
-double H5::DataSetCreator::readDouble (std::string name) const
+double H5::Location::readDouble (std::string name) const
 {
     auto ds = getDataSet (name);
     auto buffer = ds.readAll();
     return buffer.getElement<double>(0);
 }
 
-std::string H5::DataSetCreator::readString (std::string name) const
+std::string H5::Location::readString (std::string name) const
 {
     auto ds = getDataSet (name);
     auto buffer = ds.readAll();
     return buffer.toString();
 }
 
-Variant H5::DataSetCreator::readVariant (std::string name) const
+Variant H5::Location::readVariant (std::string name) const
 {
     // This approach is a bit wasteful because many temporary objects are
     // create. However, it allows the DataType class to have say over the
@@ -227,7 +223,7 @@ Variant H5::DataSetCreator::readVariant (std::string name) const
     throw std::runtime_error ("data set " + name + " cannot be read as a variant");
 }
 
-Array H5::DataSetCreator::readArray (std::string name) const
+Array H5::Location::readArray (std::string name) const
 {
     auto ds = getDataSet (name);
     auto space = ds.getSpace();
@@ -237,7 +233,7 @@ Array H5::DataSetCreator::readArray (std::string name) const
     return array;
 }
 
-std::vector<int> H5::DataSetCreator::readVectorInt (std::string name)
+std::vector<int> H5::Location::readVectorInt (std::string name)
 {
     auto heap = getDataSet (name).readAll();
     auto size = heap.size() / sizeof (int);
@@ -250,7 +246,7 @@ std::vector<int> H5::DataSetCreator::readVectorInt (std::string name)
     return vect;
 }
 
-std::vector<double> H5::DataSetCreator::readVectorDouble (std::string name)
+std::vector<double> H5::Location::readVectorDouble (std::string name)
 {
     auto heap = getDataSet (name).readAll();
     auto size = heap.size() / sizeof (double);
@@ -263,7 +259,7 @@ std::vector<double> H5::DataSetCreator::readVectorDouble (std::string name)
     return vect;
 }
 
-Array H5::DataSetCreator::readArrays (std::vector<std::string> names, int stackedAxis,
+Array H5::Location::readArrays (std::vector<std::string> names, int stackedAxis,
     Cow::Region sourceRegion) const
 {
     assert (! names.empty());
@@ -295,7 +291,7 @@ Array H5::DataSetCreator::readArrays (std::vector<std::string> names, int stacke
     return A;
 }
 
-H5::DataSet H5::DataSetCreator::writeBool (std::string name, bool value)
+H5::DataSet H5::Location::writeBool (std::string name, bool value)
 {
     auto ds = createDataSet (name, H5::DataType::boolean());
     auto buffer = HeapAllocation (sizeof (unsigned char));
@@ -304,7 +300,7 @@ H5::DataSet H5::DataSetCreator::writeBool (std::string name, bool value)
     return ds;
 }
 
-H5::DataSet H5::DataSetCreator::writeInt (std::string name, int value)
+H5::DataSet H5::Location::writeInt (std::string name, int value)
 {
     auto ds = createDataSet (name, H5::DataType::nativeInt());
     auto buffer = HeapAllocation (sizeof (int));
@@ -313,7 +309,7 @@ H5::DataSet H5::DataSetCreator::writeInt (std::string name, int value)
     return ds;
 }
 
-H5::DataSet H5::DataSetCreator::writeDouble (std::string name, double value)
+H5::DataSet H5::Location::writeDouble (std::string name, double value)
 {
     auto ds = createDataSet (name, H5::DataType::nativeDouble());
     auto buffer = HeapAllocation (sizeof (double));
@@ -322,7 +318,7 @@ H5::DataSet H5::DataSetCreator::writeDouble (std::string name, double value)
     return ds;
 }
 
-H5::DataSet H5::DataSetCreator::writeString (std::string name, std::string value)
+H5::DataSet H5::Location::writeString (std::string name, std::string value)
 {
     if (value.empty())
     {
@@ -334,7 +330,7 @@ H5::DataSet H5::DataSetCreator::writeString (std::string name, std::string value
     return ds;
 }
 
-H5::DataSet H5::DataSetCreator::writeVariant (std::string name, Variant value)
+H5::DataSet H5::Location::writeVariant (std::string name, Variant value)
 {
     switch (value.getType())
     {
@@ -347,21 +343,21 @@ H5::DataSet H5::DataSetCreator::writeVariant (std::string name, Variant value)
     }
 }
 
-H5::DataSet H5::DataSetCreator::writeArray (std::string name, const Array& A)
+H5::DataSet H5::Location::writeArray (std::string name, const Array& A)
 {
     auto ds = createDataSet (name, A.getShapeVector());
     ds.writeAll (A.getAllocation());
     return ds;    
 }
 
-H5::DataSet H5::DataSetCreator::writeArray (std::string name, const Array::Reference reference)
+H5::DataSet H5::Location::writeArray (std::string name, const Array::Reference reference)
 {
     auto ds = createDataSet (name, reference.getRegion().getShapeVector());
     ds[Region()] = reference;
     return ds;
 }
 
-H5::DataSet H5::DataSetCreator::writeVectorInt (std::string name, const std::vector<int>& value)
+H5::DataSet H5::Location::writeVectorInt (std::string name, const std::vector<int>& value)
 {
     auto heap = HeapAllocation (value.size() * sizeof (int));
     auto dset = createDataSet (name, std::vector<int> (1, value.size()), DataType::nativeInt());
@@ -374,7 +370,7 @@ H5::DataSet H5::DataSetCreator::writeVectorInt (std::string name, const std::vec
     return dset;
 }
 
-H5::DataSet H5::DataSetCreator::writeVectorDouble (std::string name, const std::vector<double>& value)
+H5::DataSet H5::Location::writeVectorDouble (std::string name, const std::vector<double>& value)
 {
     auto heap = HeapAllocation (value.size() * sizeof (double));
     auto dset = createDataSet (name, std::vector<int> (1, value.size()), DataType::nativeDouble());

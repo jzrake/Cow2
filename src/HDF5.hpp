@@ -19,12 +19,12 @@ namespace Cow
         // ====================================================================
 
 
-        class Attribute;
         class DataSet;
         class DataSpace;
         class DataType;
         class File;
         class Group;
+        class Location;
         class Object;
 
 
@@ -104,7 +104,7 @@ namespace Cow
 
         private:
             friend class DataSet;
-            friend class DataSetCreator;
+            friend class Location;
             DataType (Object* object);
             std::shared_ptr<Object> object;
         };
@@ -113,7 +113,7 @@ namespace Cow
         /**
         A base class for locations that can create groups (File and Group).
         */
-        class GroupCreator : public virtual ObjectProvider
+        class Location : public virtual ObjectProvider
         {
         public:
             /**
@@ -137,15 +137,6 @@ namespace Cow
             must not already exist.
             */
             Group createGroup (std::string name);
-        };
-
-
-        /**
-        A base class for locations that can create data sets (File and Group).
-        */
-        class DataSetCreator : public virtual ObjectProvider
-        {
-        public:
 
             /**
             Return true if the object has a data set with the given name.
@@ -210,38 +201,11 @@ namespace Cow
         };
 
 
-        /**
-        A base class for locations that can create attributes (not yet
-        implemented).
-        */
-        class AttributeCreator : public virtual ObjectProvider
-        {
-        public:
-            /**
-            Create a data set below this location with the given name and
-            shape.
-            */
-            Attribute createAttribute (std::string name, const DataType& type);
-        };
-
-
 
 
         // ====================================================================
         // Classes for concrete HDF5 objects
         // ====================================================================
-
-
-        /**
-        A class representing an HDF5 attribute.
-        */
-        class Attribute
-        {
-        private:
-            friend class AttributeCreator;
-            Attribute (Object* object);
-            std::shared_ptr<Object> object;
-        };
 
 
         /**
@@ -310,7 +274,7 @@ namespace Cow
             Reference operator[] (Cow::Region region);
 
         private:
-            friend class DataSetCreator;
+            friend class Location;
             DataSet (Object* object);
             std::shared_ptr<Object> object;
         };
@@ -351,7 +315,7 @@ namespace Cow
 
         private:
             friend class DataSet;
-            friend class DataSetCreator;
+            friend class Location;
             DataSpace (Object* object);
             std::shared_ptr<Object> object;
         };
@@ -360,7 +324,7 @@ namespace Cow
         /**
         A class representing an HDF5 file.
         */
-        class File : public GroupCreator, public DataSetCreator
+        class File : public Location
         {
         public:
             /**
@@ -384,10 +348,10 @@ namespace Cow
         /**
         A class representing an HDF5 group.
         */
-        class Group : public GroupCreator, public DataSetCreator
+        class Group : public Location
         {
         private:
-            friend class GroupCreator;
+            friend class Location;
             Group (Object* object);
             const Object* getObject() const override { return object.get(); }
             std::shared_ptr<Object> object;
