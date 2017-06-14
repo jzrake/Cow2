@@ -180,6 +180,16 @@ Region::Region()
     }
 }
 
+Region Region::withRange (int axis, int lower, int upper, int stride) const
+{
+    assert (axis < 5);
+    auto R = *this;
+    R.lower[axis] = lower;
+    R.upper[axis] = upper;
+    R.stride[axis] = stride;
+    return R;
+}
+
 Region Region::withLower (int axis, int newLower) const
 {
     assert (axis < 5);
@@ -630,6 +640,16 @@ std::vector<int> Array::vectorFromShape (Shape shape)
         --lastNonEmptyAxis;
     }
     return std::vector<int> (&shape[0], &shape[lastNonEmptyAxis] + 1);
+}
+
+void Array::deploy (Shape shape, std::function<void (int i, int j, int k)> function)
+{
+    for (int i = 0; i < shape[0]; ++i)
+    for (int j = 0; j < shape[1]; ++j)
+    for (int k = 0; k < shape[2]; ++k)
+    {
+        function (i, j, k);
+    }
 }
 
 

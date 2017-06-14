@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <array>
 #include <vector>
+#include <functional>
 
 
 
@@ -190,6 +191,12 @@ namespace Cow
         extent of its target.
         */
         Region();
+
+        /**
+        Return a new region, with the upper, lower, and stride on the given
+        axis replaced.
+        */
+        Region withRange (int axis, int lower, int upper, int stride=1) const;
 
         /**
         Return a new region, with the lower bound on the given axis replaced.
@@ -412,6 +419,12 @@ namespace Cow
         static Shape shapeFromVector (std::vector<int> shapeVector);
         static std::vector<int> vectorFromShape (Shape shape);
 
+        /**
+        A utility function which deploys a function over the first three axes
+        of the given shape. This is essentially short-hand for writing a
+        triple for-loop.
+        */
+        static void deploy (Shape shape, std::function<void (int i, int j, int k)> function);
 
         class Reference
         {
