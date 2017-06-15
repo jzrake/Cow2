@@ -99,6 +99,11 @@ namespace Cow
             return static_cast<T*>(allocation) + numberOfBytes / sizeof(T);
         }
 
+        template <class T> const T* end() const
+        {
+            return static_cast<const T*>(allocation) + numberOfBytes / sizeof(T);
+        }
+
     private:
         void* allocation;
         std::size_t numberOfBytes;
@@ -380,7 +385,7 @@ namespace Cow
         size must equal the old size.
         */
         void reshape (int n1, int n2=1, int n3=1, int n4=1, int n5=1);
-
+        
         /**
         Return a trivial iterator to the beginning of the array.
         */
@@ -390,6 +395,11 @@ namespace Cow
         Return a trivial iterator to the end of the array.
         */
         double* end() { return memory.end<double>(); }
+
+        /**
+        Return a trivial iterator to the end of the array.
+        */
+        const double* end() const { return memory.end<double>(); }
 
         /** Retrieve a value by linear index. */
         double& operator[] (int index);
@@ -404,6 +414,8 @@ namespace Cow
         */
         Reference operator[] (Region R);
 
+        operator Reference() { return this->operator[] (Region()); }
+
         double& operator() (int i);
         double& operator() (int i, int j);
         double& operator() (int i, int j, int k);
@@ -416,7 +428,14 @@ namespace Cow
         const double& operator() (int i, int j, int k, int m) const;
         const double& operator() (int i, int j, int k, int m, int n) const;
 
+        /**
+        Return an array which results from applying the given callback
+        function element-wise.
+        */
+        Array map (std::function<double (double)> function) const;
+
         static Shape shapeFromVector (std::vector<int> shapeVector);
+
         static std::vector<int> vectorFromShape (Shape shape);
 
         /**
@@ -448,6 +467,7 @@ namespace Cow
             /**
             Return the referenced array.
             */
+            Array& getArray();
             const Array& getArray() const;
 
             /**

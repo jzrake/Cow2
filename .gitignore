@@ -1,4 +1,5 @@
 *.o
+*.d
 *.h5
 *.dSYM
 cow

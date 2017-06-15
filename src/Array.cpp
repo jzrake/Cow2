@@ -15,8 +15,10 @@ if ( !(0 <= j && j < n2)) throw INDEX_ERROR(j, n2);\
 if ( !(0 <= k && k < n3)) throw INDEX_ERROR(k, n3);\
 if ( !(0 <= m && m < n4)) throw INDEX_ERROR(m, n4);\
 if ( !(0 <= n && n < n5)) throw INDEX_ERROR(n, n5); } while (0)
+#define BOUNDS_CHECK_LINEAR(n) if (! (0 <= n && n < size())) throw std::logic_error ("Linear index not in range");
 #else
 #define BOUNDS_CHECK(i, j, k, m, n) do { } while (0)
+#define BOUNDS_CHECK_LINEAR (n) do { } while (0)
 #endif
 
 using namespace Cow;
@@ -477,13 +479,13 @@ Array Array::transpose (int axis1, int axis2) const
 
 double& Array::operator[] (int index)
 {
-    assert (0 <= index && index < size());
+    BOUNDS_CHECK_LINEAR (index);
     return memory.getElement<double> (index);
 }
 
 const double& Array::operator[] (int index) const
 {
-    assert (0 <= index && index < size());
+    BOUNDS_CHECK_LINEAR (index);
     return memory.getElement<double> (index);
 }
 
@@ -616,6 +618,17 @@ void Array::copyRegion (Array& dst, const Array& src, Region R1, Region R0)
     }
 }
 
+Array Array::map (std::function<double (double)> function) const
+{
+    auto A = *this;
+
+    for (auto& x : A)
+    {
+        x = function (x);
+    }
+    return A;
+}
+
 Shape Array::shapeFromVector (std::vector<int> shapeVector)
 {
     if (shapeVector.size() > 5)
@@ -671,6 +684,11 @@ const Array::Reference& Array::Reference::operator= (const Array::Reference& sou
 {
     A.insert (Array (source), R);
     return source;
+}
+
+Array& Array::Reference::getArray()
+{
+    return A;
 }
 
 const Array& Array::Reference::getArray() const

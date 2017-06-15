@@ -1,36 +1,69 @@
+# =====================================================================
+# Cow build system
+# =====================================================================
+#
+#
+# External library dependencies: HDF5, MPI
+# Embedded library dependencies: None
+#
+#
+# Notes
+# -----
+#
+# - A useful resource for techniques to process Makefile dependencies:
+# www.microhowto.info/howto/automatically_generate_makefile_dependencies.html
+#
+# - Using -O0 rather than -O3 during development may reduce compilation time
+# significantly.
+
+
+# Build configuration
+# =====================================================================
+#
+# If a Makefile.in exists in this directory, then use it.
+#
 -include Makefile.in
+#
+# Any macros that are omitted receive these default values:
+LUA_ARCH ?= generic
+AR       ?= ar rcu
+RANLIB   ?= ranlib
+CXXFLAGS ?= -std=c++14 -Wall -O0 -g
+CXX      ?= mpicxx
+H5I      ?= -I/usr/include
+H5L      ?= -L/usr/lib -lhdf5
 
-AR ?= ar rcu
-RANLIB ?= ranlib
-CFLAGS ?= -std=c++11 -Wall -O0 -g
-CXX ?= $(HOME)/Software/mpich-3.2/bin/mpicxx
-H5I ?= -I$(HOME)/Software/hdf5-1.10.1/include
-H5L ?= -L$(HOME)/Software/hdf5-1.10.1/lib -lhdf5
-SRC := $(filter-out src/main.cpp, $(wildcard src/*.cpp))
-HDR := $(wildcard src/*.hpp)
-OBJ := $(SRC:.cpp=.o)
 
-default : src/libcow.a
+# Build macros
+# =====================================================================
+SRC      := $(filter-out src/main.cpp, $(wildcard src/*.cpp))
+OBJ      := $(SRC:%.cpp=%.o)
+DEP      := $(SRC:%.cpp=%.d)
+CXXFLAGS += -MMD -MP
+CXXFLAGS += $(H5I)
+LDFLAGS  += $(H5L)
 
-src/HDF5.o : src/HDF5.cpp $(HDR)
-	$(CXX) $(CFLAGS) -o $@ -c $< $(H5I)
 
-%.o : %.cpp $(HDR)
-	$(CXX) $(CFLAGS) -o $@ -c $<
+# Build rules
+# =====================================================================
+#
+default: cow src/libcow.a
 
-cow : src/main.o $(OBJ)
-	$(CXX) $(CFLAGS) -o $@ $^ $(H5L)
+cow: src/main.o $(OBJ)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(H5L)
 
-src/libcow.a : $(OBJ)
+src/libcow.a: $(OBJ)
 	$(AR) $@ $?
 	$(RANLIB) $@
 
-show :
+show:
 	@echo $(SRC)
 	@echo $(OBJ)
 
-doxygen :
+doxygen:
 	doxygen Doxygen.conf
 
-clean :
-	$(RM) $(OBJ) src/main.o cow
+clean:
+	$(RM) $(OBJ) src/main.o src/libcow.a cow
+
+-include $(DEP)
