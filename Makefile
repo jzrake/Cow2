@@ -50,7 +50,7 @@ LDFLAGS  += $(H5L)
 default: cow src/libcow.a
 
 cow: src/main.o $(OBJ)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(H5L)
+	$(CXX) $(LDFLAGS) -o $@ $^
 
 src/libcow.a: $(OBJ)
 	$(AR) $@ $?

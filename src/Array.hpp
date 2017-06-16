@@ -16,6 +16,8 @@ namespace Cow
     class RegionIterator;
 
 
+
+
     /**
     A class to manage large allocations on the heap using RAII standard.
     */
@@ -110,16 +112,57 @@ namespace Cow
     };
 
 
+
+
     /**
     A type to represent the shape of an array or region.
     */
     using Shape = std::array<int, 5>;
 
 
+
+
     /**
     A type to represent a multi-dimensional index (i, j, k, m, n).
     */
     using Index = std::array<int, 5>;
+
+
+
+
+    /**
+    A helper class for manipulating a particular convention for 3D Array
+    shapes. Axes 0, 1, and 2 are spatial, axis 3 is for scalar or vector
+    components, and axis 4 (whose size is caled 'rank') is used to refer
+    to indexed mesh locations (e.g. faces or edges) in a structured mesh.
+    */
+    class Shape3D
+    {
+    public:
+        Shape3D (Shape S);
+        Shape3D (const Array& A);
+        operator Shape();
+        /** Shape with spatial axes reduced. */
+        Shape3D reduced (int delta=1) const;
+        /** Shape with spatial axes reduced by first 3 elements of delta. */
+        Shape3D reduced (Shape delta) const;
+        /** Shape with the given axis reduced by delta. */
+        Shape3D reduced (int axis, int delta) const;
+        /** Shape with the given axis increased by delta. */
+        Shape3D increased (Shape delta) const;
+        /** Shape with spatial axes increased by first 3 elements of delta. */
+        Shape3D increased (int delta=1) const;
+        /** Shape with the given axis increased by delta. */
+        Shape3D increased (int axis, int delta) const;
+        /** Shape with axis 3 replaced. */
+        Shape3D withComponents (int numComponents) const;
+        /** Shape with axis 4 replaced. */
+        Shape3D withRank (int rank) const;
+    private:
+        Shape S;
+    };
+
+
 
 
     /**
@@ -240,6 +283,11 @@ namespace Cow
         Shape shape() const;
 
         /**
+        Return a 3D version of shape().
+        */
+        Shape3D shape3D() const;
+
+        /**
         Return the total number of elements in the region, after strides
         accounted for. The region is assumed to be absolute.
         */
@@ -336,6 +384,11 @@ namespace Cow
         Return the Array's shape as a 5-component array.
         */
         Shape shape() const;
+
+        /**
+        Return a 3D version of shape().
+        */
+        Shape3D shape3D() const;
 
         /**
         Return the strides in memory along each axis.

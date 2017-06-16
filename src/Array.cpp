@@ -117,6 +117,69 @@ HeapAllocation HeapAllocation::swapBytes (std::size_t bytesPerEntry) const
 
 
 // ============================================================================
+Shape3D::Shape3D (Shape S) : S (S)
+{
+
+}
+
+Shape3D::Shape3D (const Array& A) : S (A.shape())
+{
+
+}
+
+Shape3D::operator Shape()
+{
+    return S;
+}
+
+Shape3D Shape3D::increased (int delta) const
+{
+    return Shape {{ S[0] + delta, S[1] + delta, S[2] + delta, S[3], S[4] }};
+}
+
+Shape3D Shape3D::increased (Shape delta) const
+{
+    return Shape {{ S[0] + delta[0], S[1] + delta[1], S[2] + delta[2], S[3], S[4] }};
+}
+
+Shape3D Shape3D::increased (int axis, int delta) const
+{
+    auto s = S;
+    s[axis] += delta;
+    return s;
+}
+
+Shape3D Shape3D::reduced (int delta) const
+{
+    return Shape {{ S[0] - delta, S[1] - delta, S[2] - delta, S[3], S[4] }};
+}
+
+Shape3D Shape3D::reduced (Shape delta) const
+{
+    return Shape {{ S[0] - delta[0], S[1] - delta[1], S[2] - delta[2], S[3], S[4] }};
+}
+
+Shape3D Shape3D::reduced (int axis, int delta) const
+{
+    auto s = S;
+    s[axis] -= delta;
+    return s;
+}
+
+Shape3D Shape3D::withComponents (int numComponents) const
+{
+    return Shape {{ S[0], S[1], S[2], numComponents, S[4] }};
+}
+
+Shape3D Shape3D::withRank (int rank) const
+{
+    return Shape {{ S[0], S[1], S[2], S[3], rank }};
+}
+
+
+
+
+// ============================================================================
 Range::Range (int lower, int upper, int stride) : lower (lower), upper (upper), stride (stride)
 {
 
@@ -247,6 +310,11 @@ Shape Region::shape() const
         range (2).size(),
         range (3).size(),
         range (4).size() }};
+}
+
+Shape3D Region::shape3D() const
+{
+    return shape();
 }
 
 int Region::size() const
@@ -419,6 +487,11 @@ int Array::size (int axis) const
 Shape Array::shape() const
 {
     return {{n1, n2, n3, n4, n5}};
+}
+
+Shape3D Array::shape3D() const
+{
+    return shape();
 }
 
 Shape Array::strides() const
