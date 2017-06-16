@@ -132,6 +132,11 @@ Shape3D::operator Shape()
     return S;
 }
 
+int &Shape3D::operator[] (int index)
+{
+    return S[index];
+}
+
 Shape3D Shape3D::increased (int delta) const
 {
     return Shape {{ S[0] + delta, S[1] + delta, S[2] + delta, S[3], S[4] }};
@@ -233,6 +238,11 @@ Region Region::empty()
 Region Region::whole (Shape shape)
 {
     return Region().absolute (shape);
+}
+
+Region::Region (Shape shape)
+{
+    *this = Region::whole (shape);
 }
 
 Region::Region()
@@ -629,32 +639,20 @@ const double& Array::operator() (int i, int j, int k, int m, int n) const
 
 Array Array::extract (Region R) const
 {
-    R.ensureAbsolute (shape());
     auto A = Array (R.shape());
-    copyRegion (A, *this, Region::whole (shape()), R);
+    A.copyFrom (*this, Region(), R);
     return A;
 }
 
-void Array::insert (const Array& source, Region R)
+void Array::insert (const Array& A, Region R)
 {
-    R.ensureAbsolute (shape());
-
-    if (source.shape() != R.shape())
-    {
-        throw std::logic_error ("source and target regions have different shapes");
-    }
-    copyRegion (*this, source, R, Region::whole (shape()));
+    copyFrom (A, R, Region());
 }
 
-void Array::copyFrom (const Array&A, Region source, Region target)
+void Array::copyFrom (const Array&A, Region target, Region source)
 {
-    source.ensureAbsolute (A.shape());
     target.ensureAbsolute (shape());
-
-    if (source.shape() != target.shape())
-    {
-        throw std::logic_error ("source and target regions have different shapes");
-    }
+    source.ensureAbsolute (A.shape());
     copyRegion (*this, A, target, source);
 }
 
@@ -680,6 +678,11 @@ void Array::copyRegion (Array& dst, const Array& src, Region R1, Region R0)
 {
     assert (! R0.isRelative());
     assert (! R1.isRelative());
+
+    if (R0.shape() != R1.shape())
+    {
+        throw std::logic_error ("source and target regions have different shapes");
+    }
 
     for (int i0 = R0.lower[0], i1 = R1.lower[0]; i0 < R0.upper[0] && i1 < R1.upper[0]; i0 += R0.stride[0], i1 += R1.stride[0])
     for (int j0 = R0.lower[1], j1 = R1.lower[1]; j0 < R0.upper[1] && j1 < R1.upper[1]; j0 += R0.stride[1], j1 += R1.stride[1])

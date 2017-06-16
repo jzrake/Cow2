@@ -142,6 +142,7 @@ namespace Cow
         Shape3D (Shape S);
         Shape3D (const Array& A);
         operator Shape();
+        int &operator[] (int index);
         /** Shape with spatial axes reduced. */
         Shape3D reduced (int delta=1) const;
         /** Shape with spatial axes reduced by first 3 elements of delta. */
@@ -233,6 +234,12 @@ namespace Cow
         Return an absolute region for the given shape.
         */
         static Region whole (Shape shape);
+
+        /**
+        Construct a default region, which is relative and refers to the entire
+        extent of its target. Alias for "whole".
+        */
+        Region (Shape shape);
 
         /**
         Construct a default region, which is relative and refers to the entire
@@ -431,7 +438,7 @@ namespace Cow
         Copy data from the source region of A into the target region of this
         array.
         */
-        void copyFrom (const Array& A, Region sourceRegion, Region targetRegion=Region());
+        void copyFrom (const Array& A, Region targetRegion, Region sourceRegion=Region());
 
         /**
         Change the Array's shape, without modifying its data layout. The new
