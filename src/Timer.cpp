@@ -19,6 +19,11 @@ double Timer::age() const
     return double (std::clock() - timeInstantiated) / CLOCKS_PER_SEC;
 }
 
+double Timer::minutes() const
+{
+	return age() / 60;
+}
+
 std::string Timer::ageInSeconds() const
 {
     auto stream = std::ostringstream();

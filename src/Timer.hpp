@@ -27,6 +27,11 @@ public:
     double age() const;
 
     /**
+    Return the timer age, in minutes.
+    */
+    double minutes() const;
+
+    /**
     Return the age, formatted as e.g. "21.4 seconds".
     */
     std::string ageInSeconds() const;
