@@ -117,6 +117,16 @@ HeapAllocation HeapAllocation::swapBytes (std::size_t bytesPerEntry) const
 
 
 // ============================================================================
+Shape3D::Shape3D()
+{
+    S = Shape {{ 1, 1, 1, 1, 1 }};
+}
+
+Shape3D::Shape3D (int n1, int n2, int n3)
+{
+    S = Shape {{ n1, n2, n3, 1, 1 }};
+}
+
 Shape3D::Shape3D (Shape S) : S (S)
 {
 
@@ -127,14 +137,29 @@ Shape3D::Shape3D (const Array& A) : S (A.shape())
 
 }
 
-Shape3D::operator Shape()
+Shape3D::operator Shape() const
 {
     return S;
+}
+
+const int &Shape3D::operator[] (int index) const
+{
+    return S[index];
 }
 
 int &Shape3D::operator[] (int index)
 {
     return S[index];
+}
+
+Shape3D Shape3D::operator*(int x) const
+{
+    return Shape {{ S[0] * x, S[1] * x, S[2] * x, S[3], S[4] }};
+}
+
+Shape3D Shape3D::operator/(int x) const
+{
+    return Shape {{ S[0] / x, S[1] / x, S[2] / x, S[3], S[4] }};
 }
 
 Shape3D Shape3D::increased (int delta) const
@@ -180,6 +205,22 @@ Shape3D Shape3D::withRank (int rank) const
 {
     return Shape {{ S[0], S[1], S[2], S[3], rank }};
 }
+
+bool Shape3D::contains (Shape3D other) const
+{
+    return other.S[0] <= S[0] && other.S[1] <= S[1] && other.S[2] <= S[2];
+}
+
+void Shape3D::deploy (std::function<void (int i, int j, int k)> function) const
+{
+    for (int i = 0; i < S[0]; ++i)
+    for (int j = 0; j < S[1]; ++j)
+    for (int k = 0; k < S[2]; ++k)
+    {
+        function (i, j, k);
+    }
+}
+
 
 
 

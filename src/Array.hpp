@@ -139,10 +139,15 @@ namespace Cow
     class Shape3D
     {
     public:
+        Shape3D();
+        Shape3D (int n1, int n2, int n3);
         Shape3D (Shape S);
         Shape3D (const Array& A);
-        operator Shape();
+        operator Shape() const;
+        const int &operator[] (int index) const;
         int &operator[] (int index);
+        Shape3D operator*(int x) const;
+        Shape3D operator/(int x) const;
         /** Shape with spatial axes reduced. */
         Shape3D reduced (int delta=1) const;
         /** Shape with spatial axes reduced by first 3 elements of delta. */
@@ -159,6 +164,15 @@ namespace Cow
         Shape3D withComponents (int numComponents) const;
         /** Shape with axis 4 replaced. */
         Shape3D withRank (int rank) const;
+        /** True if other is <= in size to this on each axis. */
+        bool contains (Shape3D other) const;
+
+        /**
+        A utility function which deploys a function of i, j, k over the given
+        shape. This is essentially short-hand for writing a triple for-loop.
+        */
+        void deploy (std::function<void (int i, int j, int k)> function) const;
+
     private:
         Shape S;
     };
@@ -502,6 +516,9 @@ namespace Cow
         A utility function which deploys a function over the first three axes
         of the given shape. This is essentially short-hand for writing a
         triple for-loop.
+
+        \deprecated
+        move to Shape3D class
         */
         static void deploy (Shape shape, std::function<void (int i, int j, int k)> function);
 
