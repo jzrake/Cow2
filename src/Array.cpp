@@ -3,8 +3,7 @@
 #include <cstring>
 #include "Array.hpp"
 #include "DebugHelper.hpp"
-
-// #define COW_DISABLE_BOUNDS_CHECK
+#include "CowBuildConfig.hpp"
 
 #define INDEX(i, j, k, m, n) (S[0] * i + S[1] * j + S[2] * k + S[3] * m + S[4] * n)
 #define INDEX_ERROR(ii, nn) std::logic_error(#ii "=" + std::to_string (ii) + " not in bounds [0 " + std::to_string (nn) + ")")

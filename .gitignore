@@ -8,3 +8,4 @@ html
 Cow++.sublime-workspace
 libcow.a
 Makefile.in
+/src/CowBuildConfig.hpp

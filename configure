@@ -1,0 +1,20 @@
+#!/usr/bin/env python
+
+if __name__ == "__main__":
+	import sys
+	import argparse
+
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--disable-bounds-check", action='store_true')
+	parser.add_argument("--have-libunwind", action='store_true')
+
+	args = parser.parse_args()
+
+	header = open('src/CowBuildConfig.hpp', 'w')
+
+	for cfg in [header, sys.stdout]:
+		cfg.write("#ifndef COW_CONFIG_H\n")
+		cfg.write("#define COW_CONFIG_H\n")
+		if args.disable_bounds_check: cfg.write("#define COW_DISABLE_BOUNDS_CHECK\n")
+		if args.have_libunwind: cfg.write("#define COW_HAVE_LIBUNWIND\n")
+		cfg.write("#endif // COW_CONFIG_H\n")

@@ -2,7 +2,10 @@
 #include <cstdlib>
 #include <stdexcept>
 #include "DebugHelper.hpp"
+#include "CowBuildConfig.hpp"
+
 #define GUARD_STRING std::string (80, '-')
+
 
 
 
