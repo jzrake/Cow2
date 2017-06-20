@@ -512,6 +512,8 @@ namespace Cow
 
         static std::vector<int> vectorFromShape (Shape shape);
 
+        static bool isBoundsCheckDisabled();
+        
         /**
         A utility function which deploys a function over the first three axes
         of the given shape. This is essentially short-hand for writing a

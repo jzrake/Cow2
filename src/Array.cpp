@@ -771,6 +771,15 @@ std::vector<int> Array::vectorFromShape (Shape shape)
     return std::vector<int> (&shape[0], &shape[lastNonEmptyAxis] + 1);
 }
 
+bool Array::isBoundsCheckDisabled()
+{
+#ifdef COW_DISABLE_BOUNDS_CHECK
+    return true;
+#else
+    return false;
+#endif
+}
+
 void Array::deploy (Shape shape, std::function<void (int i, int j, int k)> function)
 {
     for (int i = 0; i < shape[0]; ++i)
