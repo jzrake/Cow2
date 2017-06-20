@@ -18,7 +18,7 @@ if ( !(0 <= n && n < n5)) throw INDEX_ERROR(n, n5); } while (0)
 #define BOUNDS_CHECK_LINEAR(n) if (! (0 <= n && n < size())) throw std::logic_error ("Linear index not in range");
 #else
 #define BOUNDS_CHECK(i, j, k, m, n) do { } while (0)
-#define BOUNDS_CHECK_LINEAR (n) do { } while (0)
+#define BOUNDS_CHECK_LINEAR(n) do { } while (0)
 #endif
 
 using namespace Cow;
