@@ -41,6 +41,11 @@ HeapAllocation::HeapAllocation() : numberOfBytes (0)
     allocation = nullptr;
 }
 
+HeapAllocation::~HeapAllocation()
+{
+    std::free (allocation);
+}
+
 HeapAllocation::HeapAllocation (std::size_t numberOfBytes) : numberOfBytes (numberOfBytes)
 {
     allocation = std::malloc (numberOfBytes);
@@ -66,11 +71,6 @@ HeapAllocation::HeapAllocation (HeapAllocation&& other)
     other.numberOfBytes = 0;
 }
 
-HeapAllocation::~HeapAllocation()
-{
-    std::free (allocation);
-}
-
 HeapAllocation& HeapAllocation::operator= (const HeapAllocation& other)
 {
     if (&other != this)
@@ -78,6 +78,18 @@ HeapAllocation& HeapAllocation::operator= (const HeapAllocation& other)
         numberOfBytes = other.numberOfBytes;
         allocation = std::realloc (allocation, numberOfBytes);
         std::memcpy (allocation, other.allocation, numberOfBytes);
+    }
+    return *this;
+}
+
+HeapAllocation& HeapAllocation::operator= (HeapAllocation&& other)
+{
+    if (&other != this)
+    {
+        allocation = other.allocation;
+        numberOfBytes = other.numberOfBytes;
+        other.allocation = nullptr;
+        other.numberOfBytes = 0;
     }
     return *this;
 }
@@ -498,7 +510,12 @@ Array::Array (Array&& other)
     n3 = other.n3;
     n4 = other.n4;
     n5 = other.n5;
-    other = Array();
+    other.S = {{1, 1, 1, 1, 1}};
+    other.n1 = 0;
+    other.n2 = 1;
+    other.n3 = 1;
+    other.n4 = 1;
+    other.n5 = 1;
 }
 
 Array& Array::operator= (const Array& other)
@@ -512,6 +529,27 @@ Array& Array::operator= (const Array& other)
         n3 = other.n3;
         n4 = other.n4;
         n5 = other.n5;
+    }
+    return *this;
+}
+
+Array& Array::operator= (Array&& other)
+{
+    if (&other != this)
+    {
+        memory = std::move (other.memory);
+        S = other.S;
+        n1 = other.n1;
+        n2 = other.n2;
+        n3 = other.n3;
+        n4 = other.n4;
+        n5 = other.n5;
+        other.S = {{1, 1, 1, 1, 1}};
+        other.n1 = 0;
+        other.n2 = 1;
+        other.n3 = 1;
+        other.n4 = 1;
+        other.n5 = 1;
     }
     return *this;
 }

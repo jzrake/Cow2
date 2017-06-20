@@ -31,6 +31,11 @@ namespace Cow
         HeapAllocation();
 
         /**
+        Destructor.
+        */
+        ~HeapAllocation();
+
+        /**
         Allocate a heap block of the given size. Bytes are *not* zero-
         initialized.
         */
@@ -52,14 +57,14 @@ namespace Cow
         HeapAllocation (HeapAllocation&& other);
 
         /**
-        Destructor.
-        */
-        ~HeapAllocation();
-
-        /**
         Assign this block the contents of another (deep copy).
         */
         HeapAllocation& operator= (const HeapAllocation& other);
+
+        /**
+        Move-assign this block the contents of another (steal data from other).
+        */
+        HeapAllocation& operator= (HeapAllocation&& other);
 
         /**
         Return the number of bytes in use.
@@ -384,6 +389,11 @@ namespace Cow
         Assignment operator.
         */
         Array& operator= (const Array& other);
+
+        /**
+        Move-assignment operator.
+        */
+        Array& operator= (Array&& other);
 
         /** Get a reference to the underlying buffer. */
         HeapAllocation& getAllocation() { return memory; }
