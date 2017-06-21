@@ -398,6 +398,7 @@ Region Region::absolute (Shape shape) const
     {
         if (R.lower[n] <  0) R.lower[n] += shape[n];
         if (R.upper[n] <= 0) R.upper[n] += shape[n];
+        if (R.lower[n] > R.upper[n]) throw std::logic_error("Region has negative size");
     }
     return R;
 }
@@ -412,6 +413,7 @@ Region Region::absolute (std::vector<int> shapeVector) const
         {
             if (R.lower[n] <  0) R.lower[n] += shapeVector[n];
             if (R.upper[n] <= 0) R.upper[n] += shapeVector[n];
+            if (R.lower[n] > R.upper[n]) throw std::logic_error("Region has negative size");
         }
         else
         {
