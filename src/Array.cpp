@@ -130,7 +130,7 @@ HeapAllocation HeapAllocation::swapBytes (std::size_t bytesPerEntry) const
 // ============================================================================
 Shape3D::Shape3D()
 {
-    S = Shape {{ 1, 1, 1, 1, 1 }};
+    S = Shape {{ 0, 0, 0, 0, 0 }};
 }
 
 Shape3D::Shape3D (int n1, int n2, int n3)
