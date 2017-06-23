@@ -85,7 +85,6 @@ std::ostream& operator<< (std::ostream& os, const Variant& var)
 
 std::ostream& operator<< (std::ostream& os, const Variant::NamedValues& namedValues)
 {
-#define PRINT(nm) cout << left << setw(W) << setfill('.') << #nm << " " << nm << endl
     using std::cout;
     using std::endl;
     using std::left;
@@ -94,12 +93,16 @@ std::ostream& operator<< (std::ostream& os, const Variant::NamedValues& namedVal
     using std::showpos;
     const int W = 32;
 
+    std::ios orig (nullptr);
+    orig.copyfmt (std::cout);
+
     for (auto& entry : namedValues)
     {
         os << left << setw(W) << setfill('.') << entry.first << " " << entry.second << endl;
     }
+
+    std::cout.copyfmt (orig);
     return os;
-#undef PRINT
 }
 
 Variant::NamedValues Variant::fromCommandLine (int argc, const char* argv[])
