@@ -364,6 +364,12 @@ bool Region::operator== (const Region& other) const
     return upper == other.upper && lower == other.lower && stride == other.stride;
 }
 
+int Region::size() const
+{
+    auto S = shape();
+    return S[0] * S[1] * S[2] * S[3] * S[4];
+}
+
 Shape Region::shape() const
 {
     return {{
@@ -377,12 +383,6 @@ Shape Region::shape() const
 Shape3D Region::shape3D() const
 {
     return shape();
-}
-
-int Region::size() const
-{
-    auto S = shape();
-    return S[0] * S[1] * S[2] * S[3] * S[4];
 }
 
 std::vector<int> Region::getShapeVector() const
@@ -864,6 +864,11 @@ const Array& Array::Reference::getArray() const
 const Region& Array::Reference::getRegion() const
 {
     return R;
+}
+
+int Array::Reference::size (int axis) const
+{
+    return R.range (axis).size();
 }
 
 Shape Array::Reference::shape() const

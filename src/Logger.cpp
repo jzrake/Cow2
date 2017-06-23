@@ -48,6 +48,11 @@ void Logger::setLogToNull()
     mode = ToNullDevice;
 }
 
+void Logger::setLogToNullUnless (bool condition)
+{
+    if (! condition) setLogToNull();
+}
+
 void Logger::setLogToStdout()
 {
     mode = ToStdout;

@@ -303,6 +303,12 @@ namespace Cow
         bool operator== (const Region& other) const;
 
         /**
+        Return the total number of elements in the region, after strides
+        accounted for. The region is assumed to be absolute.
+        */
+        int size() const;
+
+        /**
         Return the number of elements along each axis, after strides are
         accounted for. The region is assumed to be absolute.
         */
@@ -312,12 +318,6 @@ namespace Cow
         Return a 3D version of shape().
         */
         Shape3D shape3D() const;
-
-        /**
-        Return the total number of elements in the region, after strides
-        accounted for. The region is assumed to be absolute.
-        */
-        int size() const;
 
         /**
         Return shape(), but with trailing axes of length 1 removed.
@@ -563,6 +563,11 @@ namespace Cow
             Return the region of the referenced array.
             */
             const Region& getRegion() const;
+
+            /**
+            Convenience for shape()[axis].
+            */
+            int size (int axis) const;
 
             /**
             Return the referenced regions's shape, short for ref.getRegion().shape().

@@ -20,6 +20,7 @@ public:
     std::ostream& log (std::string caller="");
     void setLogToFile (std::string filenameToUse);
     void setLogToNull();
+    void setLogToNullUnless (bool condition);
     void setLogToStdout();
     void flush();
     void clear();
