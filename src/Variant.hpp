@@ -21,6 +21,7 @@ public:
     Variant (const char* val) : stringVal (val), type ('s') {}
 
     char getType() const { return type; }
+    bool empty() const { return type == 'n' || (type == 's' && stringVal.empty()); }
     void fromString (const std::string& rep);
     void printToStream (std::ostream& stream) const;
     operator bool() const;
@@ -31,7 +32,6 @@ public:
     static NamedValues fromCommandLine (int argc, const char* argv[]);
     static void updateFromCommandLine (Variant::NamedValues& target, int argc, const char* argv[]);
     static void update (Variant::NamedValues& target, const Variant::NamedValues& source);
-    // static void printNamedValues (std::ostream& os, PrintFormat format);
 
 private:
     bool boolVal;

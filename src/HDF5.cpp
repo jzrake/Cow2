@@ -167,7 +167,7 @@ H5::DataSet H5::Location::createDataSet (
     return H5::DataSet (new Object (datasetId, 'D'));
 }
 
-void H5::Location::iterate (std::function<void (std::string)> callback)
+void H5::Location::iterate (std::function<void (std::string)> callback) const
 {
     auto op = [] (hid_t g_id, const char *name, const H5L_info_t *info, void *op_data) -> herr_t
     {
@@ -221,6 +221,17 @@ Variant H5::Location::readVariant (std::string name) const
     if (dsNativeType == DataType::nativeInt()) return readInt (name);
     if (H5Tget_class (dsNativeType.object->id) == H5T_STRING) return readString (name);
     throw std::runtime_error ("data set " + name + " cannot be read as a variant");
+}
+
+Variant::NamedValues H5::Location::readNamedValues() const
+{
+    auto values = Variant::NamedValues();
+
+    iterate ([&] (std::string name)
+    {
+        values[name] = readVariant (name);
+    });
+    return values;
 }
 
 Array H5::Location::readArray (std::string name) const

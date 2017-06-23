@@ -171,7 +171,7 @@ namespace Cow
             Iterate over all HDF5 locations below this one, invoking the given
             callback with the name of the location.
             */
-            void iterate (std::function<void (std::string)> callback);
+            void iterate (std::function<void (std::string)> callback) const;
 
             /**
             Read several data sets and return an array with those data sets
@@ -184,7 +184,8 @@ namespace Cow
             int readInt (std::string name) const;
             double readDouble (std::string name) const;
             std::string readString (std::string name) const;
-            Variant readVariant (std::string name) const; // DOWN
+            Variant readVariant (std::string name) const;
+            Variant::NamedValues readNamedValues() const;
             Array readArray (std::string name) const;
             std::vector<int> readVectorInt (std::string name);
             std::vector<double> readVectorDouble (std::string name);
