@@ -394,6 +394,13 @@ H5::DataSet H5::Location::writeVectorDouble (std::string name, const std::vector
     return dset;
 }
 
+void H5::Location::copy (std::string name, Location& target) const
+{
+    H5Ocopy (getObject()->id, name.c_str(),
+        target.getObject()->id, name.c_str(),
+        H5P_DEFAULT, H5P_DEFAULT);
+}
+
 
 
 

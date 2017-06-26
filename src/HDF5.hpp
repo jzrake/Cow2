@@ -199,6 +199,12 @@ namespace Cow
             DataSet writeArray (std::string name, const Array::Reference reference);
             DataSet writeVectorInt (std::string name, const std::vector<int>& value);
             DataSet writeVectorDouble (std::string name, const std::vector<double>& value);
+
+            /**
+            Copy the contents of the location with the given name, to a new
+            location of the same name under the target.
+            */
+            void copy (std::string name, Location& target) const;
         };
 
 
