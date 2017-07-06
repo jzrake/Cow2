@@ -149,6 +149,16 @@ namespace Cow
             bool hasDataSets (std::vector<std::string> names) const;
 
             /**
+            Return the names of all data sets under this location.
+            */
+            std::vector<std::string> getDataSetNames() const;
+
+            /**
+            Return the names of all groups under this location.
+            */
+            std::vector<std::string> getGroupNames() const;
+
+            /**
             Get a data set at this location with the given name. The data set
             must already exist.
             */

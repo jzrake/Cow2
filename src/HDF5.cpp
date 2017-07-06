@@ -131,6 +131,34 @@ bool H5::Location::hasDataSets (std::vector<std::string> names) const
     return true;
 }
 
+std::vector<std::string> H5::Location::getDataSetNames() const
+{
+    std::vector<std::string> names;
+
+    iterate ([&] (std::string name)
+    {
+        if (hasDataSet (name))
+        {
+            names.push_back (name);
+        }
+    });
+    return names;
+}
+
+std::vector<std::string> H5::Location::getGroupNames() const
+{
+    std::vector<std::string> names;
+
+    iterate ([&] (std::string name)
+    {
+        if (hasGroup (name))
+        {
+            names.push_back (name);
+        }
+    });
+    return names;
+}
+
 H5::DataSet H5::Location::createDataSet (std::string name, DataType type)
 {
     auto space = DataSpace();
