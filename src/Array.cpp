@@ -48,7 +48,14 @@ HeapAllocation::~HeapAllocation()
 
 HeapAllocation::HeapAllocation (std::size_t numberOfBytes) : numberOfBytes (numberOfBytes)
 {
-    allocation = std::malloc (numberOfBytes);
+    if (numberOfBytes == 0)
+    {
+        allocation = nullptr;
+    }
+    else
+    {
+        allocation = std::malloc (numberOfBytes);
+    }
 }
 
 HeapAllocation::HeapAllocation (const HeapAllocation& other) : numberOfBytes (other.numberOfBytes)
@@ -86,6 +93,7 @@ HeapAllocation& HeapAllocation::operator= (HeapAllocation&& other)
 {
     if (&other != this)
     {
+        std::free (allocation);
         allocation = other.allocation;
         numberOfBytes = other.numberOfBytes;
         other.allocation = nullptr;
@@ -398,7 +406,7 @@ Region Region::absolute (Shape shape) const
     {
         if (R.lower[n] <  0) R.lower[n] += shape[n];
         if (R.upper[n] <= 0) R.upper[n] += shape[n];
-        if (R.lower[n] > R.upper[n]) throw std::logic_error("Region has negative size");
+        if (R.lower[n] > R.upper[n]) throw std::logic_error ("Region has negative size");
     }
     return R;
 }
@@ -413,7 +421,7 @@ Region Region::absolute (std::vector<int> shapeVector) const
         {
             if (R.lower[n] <  0) R.lower[n] += shapeVector[n];
             if (R.upper[n] <= 0) R.upper[n] += shapeVector[n];
-            if (R.lower[n] > R.upper[n]) throw std::logic_error("Region has negative size");
+            if (R.lower[n] > R.upper[n]) throw std::logic_error ("Region has negative size");
         }
         else
         {
@@ -837,6 +845,15 @@ void Array::deploy (Shape shape, std::function<void (int i, int j, int k)> funct
 Array::Reference::Reference (Array& A, Region R) : A (A), R (R)
 {
     assert (! R.isRelative());
+
+    if (   R.lower[0] < 0 || R.upper[0] > A.n1
+        || R.lower[1] < 0 || R.upper[1] > A.n2
+        || R.lower[2] < 0 || R.upper[2] > A.n3
+        || R.lower[3] < 0 || R.upper[3] > A.n4
+        || R.lower[4] < 0 || R.upper[4] > A.n5)
+    {
+        throw std::runtime_error ("region is not within array extent");
+    }
 }
 
 const Array& Array::Reference::operator= (const Array& source)
