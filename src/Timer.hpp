@@ -1,5 +1,7 @@
 #ifndef Timer_hpp
 #define Timer_hpp
+#include <ctime>
+
 
 namespace Cow
 {
