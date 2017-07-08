@@ -82,8 +82,11 @@ HeapAllocation& HeapAllocation::operator= (const HeapAllocation& other)
 {
     if (&other != this)
     {
-        numberOfBytes = other.numberOfBytes;
-        allocation = std::realloc (allocation, numberOfBytes);
+        if (numberOfBytes != other.numberOfBytes)
+        {
+            numberOfBytes = other.numberOfBytes;
+            allocation = std::realloc (allocation, numberOfBytes);
+        }
         std::memcpy (allocation, other.allocation, numberOfBytes);
     }
     return *this;
