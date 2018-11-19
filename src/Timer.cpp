@@ -26,7 +26,7 @@ double Timer::minutes() const
 
 std::string Timer::ageInSeconds() const
 {
-    auto stream = std::ostringstream();
+    std::ostringstream stream;
     stream << std::setprecision(2) << age() << " seconds";
     return stream.str();
 }
