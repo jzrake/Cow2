@@ -147,6 +147,10 @@ MpiCommunicator::MpiCommunicator()
 
 }
 
+MpiCommunicator::~MpiCommunicator()
+{
+}
+
 MpiCommunicator::MpiCommunicator (Internals* internals) : internals (internals)
 {
 
@@ -222,20 +226,22 @@ MpiCommunicator MpiCommunicator::split (int color) const
 
 double MpiCommunicator::minimum (double x) const
 {
-    MPI_Allreduce (MPI_IN_PLACE, &x, 1, MPI_DOUBLE, MPI_MIN, internals->comm);
-    return x;
+    double result;
+    MPI_Allreduce (&x, &result, 1, MPI_DOUBLE, MPI_MIN, internals->comm);
+    return result;
 }
 
 double MpiCommunicator::maximum (double x) const
 {
-    MPI_Allreduce (MPI_IN_PLACE, &x, 1, MPI_DOUBLE, MPI_MAX, internals->comm);
-    return x;
+    double result;
+    MPI_Allreduce (&x, &result, 1, MPI_DOUBLE, MPI_MAX, internals->comm);
+    return result;
 }
 
 std::vector<double> MpiCommunicator::sum (const std::vector<double>& A) const
 {
     auto ret = A;
-    MPI_Allreduce (MPI_IN_PLACE, &ret[0], ret.size(), MPI_DOUBLE, MPI_SUM, internals->comm);
+    MPI_Allreduce (&A[0], &ret[0], ret.size(), MPI_DOUBLE, MPI_SUM, internals->comm);
     return ret;
 }
 
@@ -245,12 +251,14 @@ std::vector<double> MpiCommunicator::sum (const std::vector<double>& A) const
 // ============================================================================
 MpiCartComm::MpiCartComm()
 {
-
 }
 
 MpiCartComm::MpiCartComm (Internals* internals) : MpiCommunicator (internals)
 {
+}
 
+MpiCartComm::~MpiCartComm()
+{
 }
 
 int MpiCartComm::getCartRank (std::vector<int> coords) const
@@ -364,6 +372,10 @@ MpiDataType::MpiDataType()
 MpiDataType::MpiDataType (Internals* internals) : internals (internals)
 {
 
+}
+
+MpiDataType::~MpiDataType()
+{
 }
 
 std::size_t MpiDataType::size() const

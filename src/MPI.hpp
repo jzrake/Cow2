@@ -104,6 +104,7 @@ namespace Cow
         resources.
         */
         MpiCommunicator();
+       ~MpiCommunicator();
 
         /**
         Return the rank of this communicator.
@@ -201,6 +202,7 @@ namespace Cow
         initialize the cartesian communicator immediately.
         */
         MpiCartComm();
+        ~MpiCartComm();
 
         /**
         Return the rank of the processor at the given coordinates in the
@@ -269,6 +271,7 @@ namespace Cow
         Default constructor, creates an unusable data type.
         */
         MpiDataType();
+        ~MpiDataType();
 
         /**
         Return the size, in bytes, of the data type.
